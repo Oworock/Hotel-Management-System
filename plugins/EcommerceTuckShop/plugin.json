@@ -1,0 +1,6 @@
+{
+    "name": "EcommerceTuckShop",
+    "version": "1.0.0",
+    "description": "E-commerce and Tuck Shop/Restaurant system for guest and public ordering.",
+    "service_provider": "Plugins\\EcommerceTuckShop\\EcommerceTuckShopServiceProvider"
+}

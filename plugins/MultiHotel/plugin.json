@@ -1,0 +1,6 @@
+{
+    "name": "MultiHotel",
+    "version": "1.0.0",
+    "description": "Multi-property management enabling multiple hotels, scoping, and guest portal filtering.",
+    "service_provider": "Plugins\\MultiHotel\\MultiHotelServiceProvider"
+}

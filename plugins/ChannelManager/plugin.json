@@ -1,0 +1,6 @@
+{
+    "name": "ChannelManager",
+    "version": "1.0.0",
+    "description": "OTA Channel Manager synchronization integration (Booking.com, Airbnb, Expedia) for stayFlow HMS.",
+    "service_provider": "Plugins\\ChannelManager\\ChannelManagerServiceProvider"
+}
