@@ -101,3 +101,48 @@ class HomeController extends Controller
         return view('page', compact('page'));
     }
 }
+
+    public function faqs()
+    {
+        $faqs = \App\Models\FAQ::where('is_active', true)->orderBy('order')->get();
+        return view('faqs', compact('faqs'));
+    }
+
+    public function testimonials()
+    {
+        $testimonials = \App\Models\Testimonial::where('is_active', true)->latest()->get();
+        return view('testimonials', compact('testimonials'));
+    }
+
+    public function gallery()
+    {
+        $photos = \App\Models\Gallery::where('is_active', true)->orderBy('order')->get();
+        return view('gallery', compact('photos'));
+    }
+
+    public function blog()
+    {
+        $posts = \App\Models\BlogPost::where('is_published', true)->with('author')->latest('published_at')->get();
+        return view('blog.index', compact('posts'));
+    }
+
+    public function showBlogPost($slug)
+    {
+        $post = \App\Models\BlogPost::where('slug', $slug)->where('is_published', true)->firstOrFail();
+        return view('blog.show', compact('post'));
+    }
+
+    public function services()
+    {
+        return view('services');
+    }
+
+    public function privacy()
+    {
+        return view('privacy');
+    }
+
+    public function terms()
+    {
+        return view('terms');
+    }

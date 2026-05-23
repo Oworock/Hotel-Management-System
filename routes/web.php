@@ -9,9 +9,9 @@ use App\Http\Controllers\ReceptionistController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Auth;
-
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InstallController;
+use App\Http\Controllers\ContentManagementController;
 
 // Installer & Licensing Routes
 Route::get('/install', [InstallController::class, 'showInstall'])->name('install');
@@ -196,4 +196,41 @@ Route::middleware('auth')->group(function () {
         Route::post('/bookings/{booking}/check-in', [CustomerController::class, 'selfCheckIn'])->name('customer.bookings.check_in');
         Route::post('/bookings/{booking}/check-out', [CustomerController::class, 'selfCheckOut'])->name('customer.bookings.check_out');
     });
+});
+
+// Frontend content pages
+Route::get('/services', [HomeController::class, 'services'])->name('services');
+Route::get('/faqs', [HomeController::class, 'faqs'])->name('faqs');
+Route::get('/testimonials', [HomeController::class, 'testimonials'])->name('testimonials');
+Route::get('/gallery', [HomeController::class, 'gallery'])->name('gallery');
+Route::get('/privacy', [HomeController::class, 'privacy'])->name('privacy');
+Route::get('/terms', [HomeController::class, 'terms'])->name('terms');
+Route::get('/blog', [HomeController::class, 'blog'])->name('blog.index');
+Route::get('/blog/{slug}', [HomeController::class, 'showBlogPost'])->name('blog.show');
+
+// Admin Content Management Routes
+Route::middleware(['auth', 'role:admin,super_admin,manage_settings'])->prefix('admin')->group(function () {
+    // FAQs
+    Route::get('/faqs', [ContentManagementController::class, 'faqs'])->name('admin.faqs');
+    Route::post('/faqs', [ContentManagementController::class, 'storeFaq'])->name('admin.faqs.store');
+    Route::post('/faqs/{faq}/update', [ContentManagementController::class, 'updateFaq'])->name('admin.faqs.update');
+    Route::delete('/faqs/{faq}', [ContentManagementController::class, 'deleteFaq'])->name('admin.faqs.delete');
+
+    // Testimonials
+    Route::get('/testimonials', [ContentManagementController::class, 'testimonials'])->name('admin.testimonials');
+    Route::post('/testimonials', [ContentManagementController::class, 'storeTestimonial'])->name('admin.testimonials.store');
+    Route::post('/testimonials/{testimonial}/update', [ContentManagementController::class, 'updateTestimonial'])->name('admin.testimonials.update');
+    Route::delete('/testimonials/{testimonial}', [ContentManagementController::class, 'deleteTestimonial'])->name('admin.testimonials.delete');
+
+    // Gallery
+    Route::get('/gallery', [ContentManagementController::class, 'gallery'])->name('admin.gallery');
+    Route::post('/gallery', [ContentManagementController::class, 'storeGallery'])->name('admin.gallery.store');
+    Route::post('/gallery/{photo}/update', [ContentManagementController::class, 'updateGallery'])->name('admin.gallery.update');
+    Route::delete('/gallery/{photo}', [ContentManagementController::class, 'deleteGallery'])->name('admin.gallery.delete');
+
+    // Blog
+    Route::get('/blog', [ContentManagementController::class, 'blog'])->name('admin.blog');
+    Route::post('/blog', [ContentManagementController::class, 'storeBlog'])->name('admin.blog.store');
+    Route::post('/blog/{post}/update', [ContentManagementController::class, 'updateBlog'])->name('admin.blog.update');
+    Route::delete('/blog/{post}', [ContentManagementController::class, 'deleteBlog'])->name('admin.blog.delete');
 });
