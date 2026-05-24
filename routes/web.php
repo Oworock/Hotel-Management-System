@@ -11,6 +11,7 @@ use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InstallController;
+use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\ContentManagementController;
 
 // Installer & Licensing Routes
@@ -233,4 +234,43 @@ Route::middleware(['auth', 'role:admin,super_admin,manage_settings'])->prefix('a
     Route::post('/blog', [ContentManagementController::class, 'storeBlog'])->name('admin.blog.store');
     Route::post('/blog/{post}/update', [ContentManagementController::class, 'updateBlog'])->name('admin.blog.update');
     Route::delete('/blog/{post}', [ContentManagementController::class, 'deleteBlog'])->name('admin.blog.delete');
+});
+
+// Theme & Global Settings Routes (Super Admin Only)
+Route::middleware(['auth', 'role:super_admin'])->prefix('super-admin')->group(function () {
+    // Themes
+    Route::get('/themes', [ThemeController::class, 'themes'])->name('super_admin.themes');
+    Route::post('/themes/{theme}/activate', [ThemeController::class, 'activateTheme'])->name('super_admin.themes.activate');
+    Route::post('/themes/{theme}/colors', [ThemeController::class, 'updateThemeColors'])->name('super_admin.themes.colors');
+
+    // Languages
+    Route::get('/languages', [ThemeController::class, 'languages'])->name('super_admin.languages');
+    Route::post('/languages', [ThemeController::class, 'storeLanguage'])->name('super_admin.languages.store');
+    Route::post('/languages/{language}/update', [ThemeController::class, 'updateLanguage'])->name('super_admin.languages.update');
+    Route::delete('/languages/{language}', [ThemeController::class, 'deleteLanguage'])->name('super_admin.languages.delete');
+
+    // Currencies
+    Route::get('/currencies', [ThemeController::class, 'currencies'])->name('super_admin.currencies');
+    Route::post('/currencies', [ThemeController::class, 'storeCurrency'])->name('super_admin.currencies.store');
+    Route::post('/currencies/{currency}/update', [ThemeController::class, 'updateCurrency'])->name('super_admin.currencies.update');
+    Route::delete('/currencies/{currency}', [ThemeController::class, 'deleteCurrency'])->name('super_admin.currencies.delete');
+
+    // Amenities
+    Route::get('/amenities', [ThemeController::class, 'amenities'])->name('super_admin.amenities');
+    Route::post('/amenities', [ThemeController::class, 'storeAmenity'])->name('super_admin.amenities.store');
+    Route::post('/amenities/{amenity}/update', [ThemeController::class, 'updateAmenity'])->name('super_admin.amenities.update');
+    Route::delete('/amenities/{amenity}', [ThemeController::class, 'deleteAmenity'])->name('super_admin.amenities.delete');
+
+    // Special Offers
+    Route::get('/special-offers', [ThemeController::class, 'specialOffers'])->name('super_admin.offers');
+    Route::post('/special-offers', [ThemeController::class, 'storeSpecialOffer'])->name('super_admin.offers.store');
+    Route::post('/special-offers/{offer}/update', [ThemeController::class, 'updateSpecialOffer'])->name('super_admin.offers.update');
+    Route::delete('/special-offers/{offer}', [ThemeController::class, 'deleteSpecialOffer'])->name('super_admin.offers.delete');
+});
+
+// Analytics Route (Admin)
+Route::middleware(['auth', 'role:admin,super_admin'])->prefix('admin')->group(function () {
+    Route::get('/analytics', function () {
+        return view('admin.analytics');
+    })->name('admin.analytics');
 });
