@@ -1,975 +1,366 @@
-@extends('layouts.frontend')
-
-@section('title', 'Luxury Hotel & Resort')
-
-@section('styles')
-<style>
-    /* Hero Slider Styles */
-    .slider-container {
-        position: relative;
-        width: 100%;
-        height: 600px;
-        overflow: hidden;
-        background: #000;
-    }
-
-    .slide {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        transition: opacity 0.8s ease-in-out;
-        background-size: cover;
-        background-position: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1;
-    }
-
-    .slide.active {
-        opacity: 1;
-        z-index: 2;
-    }
-
-    /* Dark overlay for contrast */
-    .slide::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.45);
-        z-index: 1;
-    }
-
-    .slide-content {
-        position: relative;
-        z-index: 3;
-        max-width: 800px;
-        padding: 2rem;
-        color: #fff;
-        text-align: center;
-        transform: translateY(30px);
-        transition: transform 0.8s ease-in-out;
-    }
-
-    .slide.active .slide-content {
-        transform: translateY(0);
-    }
-
-    .slide-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        margin-bottom: 1rem;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        font-family: 'Outfit', sans-serif;
-    }
-
-    .slide-subtitle {
-        font-size: 1.25rem;
-        margin-bottom: 2.5rem;
-        text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
-        line-height: 1.6;
-    }
-
-    .slider-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #fff;
-        font-size: 1.25rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all var(--transition-fast);
-        z-index: 10;
-    }
-
-    .slider-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        color: var(--primary);
-    }
-
-    .slider-btn.prev {
-        left: 20px;
-    }
-
-    .slider-btn.next {
-        right: 20px;
-    }
-
-    .slider-dots {
-        position: absolute;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 0.75rem;
-        z-index: 10;
-    }
-
-    .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.4);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-    }
-
-    .dot.active {
-        background: #fff;
-        transform: scale(1.25);
-    }
-
-    @media (max-width: 768px) {
-        .slider-container {
-            height: 480px;
-        }
-        .slide-title {
-            font-size: 2.25rem;
-        }
-        .slide-subtitle {
-            font-size: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .slider-btn {
-            width: 40px;
-            height: 40px;
-            font-size: 1rem;
-        }
-    }
-
-    .search-container {
-        position: relative;
-        z-index: 30;
-        max-width: 900px;
-        margin: -3rem auto 0 auto;
-        padding: 0 1rem;
-    }
-
-    .search-card {
-        background: var(--surface-glass);
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--border-glass);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        box-shadow: var(--shadow-lg);
-        display: grid;
-        grid-template-columns: 1fr 1fr 120px auto;
-        gap: 1.5rem;
-        align-items: end;
-    }
-
-    @media (max-width: 768px) {
-        .search-card {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .section-header {
-        text-align: center;
-        max-width: 600px;
-        margin: 5rem auto 3rem auto;
-    }
-
-    .section-tag {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        color: var(--primary);
-        margin-bottom: 0.5rem;
-        display: inline-block;
-        background: var(--primary-glow);
-        padding: 0.25rem 0.75rem;
-        border-radius: var(--radius-full);
-    }
-
-    .section-title {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-    }
-
-    .section-desc {
-        color: var(--text-secondary);
-        line-height: 1.6;
-    }
-
-    .rooms-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 2rem;
-        max-width: 1200px;
-        margin: 0 auto 5rem auto;
-        padding: 0 1.5rem;
-    }
-
-    .room-card {
-        background: var(--surface);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        overflow: hidden;
-        box-shadow: var(--shadow-sm);
-        transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
-        display: flex;
-        flex-direction: column;
-    }
-
-    .room-card:hover {
-        transform: translateY(-6px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .room-image-placeholder {
-        height: 220px;
-        background: linear-gradient(135deg, var(--primary-glow) 0%, var(--secondary-glow) 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--primary);
-        font-size: 3rem;
-        position: relative;
-    }
-
-    .room-badge {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: var(--success);
-        color: white;
-        padding: 0.35rem 0.75rem;
-        border-radius: var(--radius-full);
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .room-badge.danger {
-        background: var(--danger);
-    }
-
-    .room-body {
-        padding: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-    }
-
-    .room-name {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-bottom: 0.75rem;
-    }
-
-    .room-description {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        line-height: 1.5;
-        margin-bottom: 1.25rem;
-        flex-grow: 1;
-    }
-
-    .room-amenities {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .amenity-tag {
-        background: var(--background);
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-        padding: 0.25rem 0.5rem;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border-color);
-    }
-
-    .room-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-top: 1px solid var(--border-color);
-        padding-top: 1rem;
-        margin-top: auto;
-    }
-
-    .room-price {
-        font-family: 'Outfit', sans-serif;
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-
-    .room-price span {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        font-weight: 400;
-    }
-
-    .features-section {
-        background: var(--background);
-        padding: 5rem 1.5rem;
-        border-top: 1px solid var(--border-color);
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .features-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 2.5rem;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .feature-card {
-        background: var(--surface);
-        border-radius: var(--radius-md);
-        padding: 2rem;
-        border: 1px solid var(--border-color);
-        text-align: center;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .feature-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: var(--radius-md);
-        background: var(--primary-glow);
-        color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin: 0 auto 1.5rem auto;
-    }
-
-    .contact-map-section {
-        display: grid;
-        grid-template-columns: 1fr 1.2fr;
-        max-width: 1200px;
-        margin: 5rem auto;
-        gap: 3rem;
-        padding: 0 1.5rem;
-    }
-
-    @media (max-width: 768px) {
-        .contact-map-section {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .contact-info-card {
-        background: var(--surface);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        padding: 2.5rem;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .contact-row {
-        display: flex;
-        align-items: flex-start;
-        gap: 1.25rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .contact-row-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: var(--secondary-glow);
-        color: var(--secondary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        flex-shrink: 0;
-    }
-
-    .contact-label {
-        font-weight: 600;
-        font-size: 0.95rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .contact-value {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-    }
-
-    .map-wrapper {
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        border: 1px solid var(--border-color);
-        box-shadow: var(--shadow-sm);
-        height: 400px;
-    }
-
-    .map-wrapper iframe {
-        width: 100%;
-        height: 100%;
-        border: 0;
-    }
-
-    /* Promo Pop-up Modal */
-    .promo-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(8px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.4s ease, visibility 0.4s ease;
-    }
-
-    .promo-modal-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .promo-modal-content {
-        background: var(--surface-glass);
-        backdrop-filter: blur(25px);
-        border: 1px solid var(--border-glass);
-        border-radius: var(--radius-lg);
-        width: 90%;
-        max-width: 550px;
-        overflow: hidden;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-        transform: scale(0.9) translateY(20px);
-        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        position: relative;
-    }
-
-    .promo-modal-overlay.active .promo-modal-content {
-        transform: scale(1) translateY(0);
-    }
-
-    .promo-modal-close {
-        position: absolute;
-        top: 1.25rem;
-        right: 1.25rem;
-        background: rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #fff;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        z-index: 10;
-    }
-
-    .promo-modal-close:hover {
-        background: rgba(0, 0, 0, 0.6);
-        transform: rotate(90deg);
-    }
-
-    .promo-modal-banner {
-        height: 200px;
-        background-size: cover;
-        background-position: center;
-        position: relative;
-    }
-
-    .promo-modal-banner::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5));
-    }
-
-    .promo-modal-body {
-        padding: 2.25rem;
-        text-align: center;
-        color: var(--text-primary);
-    }
-
-    .promo-badge {
-        display: inline-block;
-        background: var(--primary-glow);
-        color: var(--primary);
-        font-weight: 700;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        padding: 0.35rem 1rem;
-        border-radius: var(--radius-full);
-        margin-bottom: 1rem;
-        letter-spacing: 0.05em;
-    }
-
-    .promo-title {
-        font-size: 1.75rem;
-        font-weight: 800;
-        margin-bottom: 0.75rem;
-        color: var(--text-primary);
-        font-family: 'Outfit', sans-serif;
-    }
-
-    .promo-text {
-        font-size: 0.95rem;
-        color: var(--text-secondary);
-        line-height: 1.6;
-        margin-bottom: 1.75rem;
-    }
-
-    .promo-coupon-container {
-        background: rgba(255, 255, 255, 0.04);
-        border: 2px dashed var(--primary);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1.75rem;
-        gap: 1rem;
-    }
-
-    .promo-coupon-code {
-        font-family: monospace;
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: var(--primary);
-        letter-spacing: 0.05em;
-    }
-
-    .promo-copy-btn {
-        background: var(--primary);
-        color: white;
-        border: none;
-        padding: 0.6rem 1.25rem;
-        border-radius: var(--radius-sm);
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .promo-copy-btn:hover {
-        background: var(--primary-hover);
-        transform: translateY(-2px);
-    }
-</style>
-@endsection
+@extends('layouts.app')
 
 @section('content')
-    <!-- Dynamic Hero Slider -->
-    <div class="slider-container">
-        @forelse($slides as $index => $slide)
-            <div class="slide {{ $index === 0 ? 'active' : '' }}" style="background-image: url('{{ $slide->image_path }}');">
-                <div class="slide-content">
-                    @if($slide->title)
-                        <h1 class="slide-title">{{ $slide->title }}</h1>
-                    @endif
-                    @if($slide->subtitle)
-                        <p class="slide-subtitle">{{ $slide->subtitle }}</p>
-                    @endif
-                    @if($slide->button_text && $slide->button_link)
-                        <a href="{{ $slide->button_link }}" class="btn btn-primary" style="padding: 0.75rem 2rem; font-weight: 600; font-size: 1rem; text-decoration: none;">
-                            {{ $slide->button_text }}
-                        </a>
-                    @endif
-                </div>
-            </div>
-        @empty
-            <!-- Fallback Static Banner if no slides seeded or configured -->
-            <div class="slide active" style="background: linear-gradient(135deg, rgba(110, 68, 255, 0.08) 0%, rgba(244, 68, 150, 0.08) 100%), var(--surface);">
-                <div class="slide-content" style="color: var(--text-primary);">
-                    <h1 class="slide-title" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                        {{ $heroTitle }}
-                    </h1>
-                    <p class="slide-subtitle" style="color: var(--text-secondary);">{{ $heroSubtitle }}</p>
-                </div>
-            </div>
-        @endforelse
+<div class="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
+    <!-- Hero Section -->
+    <section class="relative h-screen bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 overflow-hidden flex items-center">
+        <!-- Animated Background -->
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+            <div class="absolute -bottom-8 right-1/4 w-96 h-96 bg-cyan-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+        </div>
 
-        @if($slides->count() > 1)
-            <button class="slider-btn prev" onclick="moveSlide(-1)" aria-label="Previous Slide"><i class="fa-solid fa-chevron-left"></i></button>
-            <button class="slider-btn next" onclick="moveSlide(1)" aria-label="Next Slide"><i class="fa-solid fa-chevron-right"></i></button>
-            
-            <div class="slider-dots">
-                @foreach($slides as $index => $slide)
-                    <span class="dot {{ $index === 0 ? 'active' : '' }}" onclick="setSlide({{ $index }})"></span>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <!-- Left Content -->
+                <div class="text-white space-y-6">
+                    <h1 class="text-5xl md:text-6xl font-bold leading-tight">
+                        Your Perfect Stay
+                        <span class="block text-cyan-200">Awaits You</span>
+                    </h1>
+                    <p class="text-xl text-blue-100 leading-relaxed">
+                        Experience world-class hospitality with stunning views, exceptional service, and unforgettable memories.
+                    </p>
+                    <div class="flex gap-4 pt-4">
+                        <a href="{{ route('rooms') }}" class="bg-white text-blue-600 hover:bg-blue-50 px-8 py-4 rounded-lg font-bold transition-all transform hover:scale-105 shadow-lg">
+                            Browse Rooms
+                        </a>
+                        <a href="{{ route('contact') }}" class="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-lg font-bold transition-all">
+                            Contact Us
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Image/Illustration -->
+                <div class="relative h-96 md:h-full">
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-cyan-300/20 rounded-3xl backdrop-blur-sm border border-white/20"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-9xl">🏨</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Search Bar -->
+    <section class="relative -mt-20 z-20 px-4">
+        <div class="max-w-5xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6">Find Your Perfect Room</h3>
+                <form method="GET" action="{{ route('home') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Check-in</label>
+                        <input type="date" name="check_in_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" value="{{ request('check_in_date') }}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Check-out</label>
+                        <input type="date" name="check_out_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" value="{{ request('check_out_date') }}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Guests</label>
+                        <select name="guests" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                            @for ($i = 1; $i <= 6; $i++)
+                            <option value="{{ $i }}" {{ request('guests', 1) == $i ? 'selected' : '' }}>{{ $i }} Guest{{ $i > 1 ? 's' : '' }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                            Search
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Welcome Section -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <h2 class="text-4xl font-bold text-gray-900">Welcome to stayFlow</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed">
+                        Discover a luxury sanctuary where contemporary design meets pristine nature. Our hotel offers an unparalleled experience with world-class amenities and personalized service.
+                    </p>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3">
+                            <span class="text-2xl">⭐</span>
+                            <span class="text-gray-700">Award-winning hospitality</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="text-2xl">🏆</span>
+                            <span class="text-gray-700">Premium rooms with ocean views</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="text-2xl">🍽️</span>
+                            <span class="text-gray-700">Fine dining restaurants</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="text-2xl">💆</span>
+                            <span class="text-gray-700">World-class spa & wellness</span>
+                        </li>
+                    </ul>
+                    <a href="{{ route('services') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
+                        Explore Our Services
+                    </a>
+                </div>
+                <div class="relative">
+                    <div class="bg-gradient-to-br from-blue-100 to-cyan-100 rounded-3xl p-8 h-96 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-8xl mb-4">🌴</div>
+                            <p class="text-gray-700 font-semibold">Tropical Paradise</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Rooms -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Featured Rooms</h2>
+                <p class="text-xl text-gray-600">Discover our luxurious accommodation options</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                @forelse($roomTypes ?? [] as $roomType)
+                <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-shadow overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-6xl">
+                        🛏️
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ $roomType->name }}</h3>
+                        <p class="text-gray-600 mb-4">{{ Str::limit($roomType->description, 100) }}</p>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-blue-600">${{ $roomType->price }}</span>
+                            <span class="text-sm text-gray-500">per night</span>
+                        </div>
+                        <a href="{{ route('rooms') }}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            Book Now
+                        </a>
+                    </div>
+                </div>
+                @empty
+                <div class="col-span-3 text-center py-8 text-gray-500">
+                    <p>No rooms available at the moment</p>
+                </div>
+                @endforelse
+            </div>
+
+            <div class="text-center mt-12">
+                <a href="{{ route('rooms') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
+                    View All Rooms
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Highlights -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">World-Class Amenities</h2>
+                <p class="text-xl text-gray-600">Everything you need for a perfect stay</p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="text-center p-6 rounded-xl hover:bg-blue-50 transition-colors">
+                    <div class="text-5xl mb-3">🏊</div>
+                    <h3 class="font-bold text-gray-800">Swimming Pool</h3>
+                </div>
+                <div class="text-center p-6 rounded-xl hover:bg-blue-50 transition-colors">
+                    <div class="text-5xl mb-3">💆</div>
+                    <h3 class="font-bold text-gray-800">Spa & Wellness</h3>
+                </div>
+                <div class="text-center p-6 rounded-xl hover:bg-blue-50 transition-colors">
+                    <div class="text-5xl mb-3">🍽️</div>
+                    <h3 class="font-bold text-gray-800">Fine Dining</h3>
+                </div>
+                <div class="text-center p-6 rounded-xl hover:bg-blue-50 transition-colors">
+                    <div class="text-5xl mb-3">🏋️</div>
+                    <h3 class="font-bold text-gray-800">Fitness Center</h3>
+                </div>
+                <div class="text-center p-6 rounded-xl hover:bg-blue-50 transition-colors">
+                    <div class="text-5xl mb-3">📶</div>
+                    <h3 class="font-bold text-gray-800">High-Speed WiFi</h3>
+                </div>
+                <div class="text-center p-6 rounded-xl hover:bg-blue-50 transition-colors">
+                    <div class="text-5xl mb-3">🛎️</div>
+                    <h3 class="font-bold text-gray-800">24/7 Concierge</h3>
+                </div>
+                <div class="text-center p-6 rounded-xl hover:bg-blue-50 transition-colors">
+                    <div class="text-5xl mb-3">🚗</div>
+                    <h3 class="font-bold text-gray-800">Valet Parking</h3>
+                </div>
+                <div class="text-center p-6 rounded-xl hover:bg-blue-50 transition-colors">
+                    <div class="text-5xl mb-3">🎉</div>
+                    <h3 class="font-bold text-gray-800">Event Space</h3>
+                </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <a href="{{ route('services') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
+                    View All Services
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-20 bg-gradient-to-r from-blue-50 to-cyan-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Guest Reviews</h2>
+                <p class="text-xl text-gray-600">What our guests are saying</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                @php
+                    $testimonials = [
+                        ['name' => 'Sarah Johnson', 'rating' => 5, 'comment' => 'An absolutely wonderful stay! The staff was incredibly attentive and the rooms are beautifully designed.'],
+                        ['name' => 'Michael Chen', 'rating' => 5, 'comment' => 'Exceeded all expectations. The spa was amazing and the food at the restaurants was outstanding.'],
+                        ['name' => 'Emma Rodriguez', 'rating' => 5, 'comment' => 'Perfect vacation! Beautiful views, comfortable beds, and excellent service throughout our stay.'],
+                    ]
+                @endphp
+
+                @foreach($testimonials as $testimonial)
+                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow">
+                    <div class="flex gap-1 mb-4">
+                        @for($i = 0; $i < $testimonial['rating']; $i++)
+                        <span class="text-yellow-400 text-2xl">★</span>
+                        @endfor
+                    </div>
+                    <p class="text-gray-700 mb-6 leading-relaxed">{{ $testimonial['comment'] }}</p>
+                    <p class="font-bold text-gray-800">{{ $testimonial['name'] }}</p>
+                    <p class="text-sm text-gray-500">Verified Guest</p>
+                </div>
                 @endforeach
             </div>
-        @endif
-    </div>
 
-    <!-- Search / Booking Availability Widget -->
-    <div class="search-container">
-        <form action="/" method="GET" class="search-card">
-            <div class="form-group" style="margin-bottom: 0;">
-                <label for="check_in_date" class="form-label" style="font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Check-in Date</label>
-                <input type="date" name="check_in_date" id="check_in_date" class="form-control" value="{{ $checkIn }}" required min="{{ date('Y-m-d') }}">
+            <div class="text-center mt-12">
+                <a href="{{ route('testimonials') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
+                    Read More Reviews
+                </a>
             </div>
-            
-            <div class="form-group" style="margin-bottom: 0;">
-                <label for="check_out_date" class="form-label" style="font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Check-out Date</label>
-                <input type="date" name="check_out_date" id="check_out_date" class="form-control" value="{{ $checkOut }}" required min="{{ date('Y-m-d', strtotime('+1 day')) }}">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 0;">
-                <label for="guests" class="form-label" style="font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Guests</label>
-                <select name="guests" id="guests" class="form-control">
-                    @for($i=1; $i<=8; $i++)
-                        <option value="{{ $i }}" {{ $guestsCount == $i ? 'selected' : '' }}>{{ $i }} {{ $i == 1 ? 'Guest' : 'Guests' }}</option>
-                    @endfor
-                </select>
-            </div>
-
-            <div>
-                <button type="submit" class="btn btn-primary btn-block" style="padding: 0.75rem 1.5rem; height: 46px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600;">
-                    <i class="fa-solid fa-magnifying-glass"></i> Check
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Main Dynamic Catalog -->
-    <section id="rooms" class="explore-section">
-        <div class="section-header">
-            <span class="section-tag">Luxurious Suites</span>
-            <h2 class="section-title">
-                @if($searched)
-                    Available Rooms for Your Stay
-                @else
-                    Explore Our Accommodations
-                @endif
-            </h2>
-            <p class="section-desc">
-                @if($searched)
-                    Showing available options matching {{ $guestsCount }} guests for {{ $nights }} {{ $nights == 1 ? 'night' : 'nights' }} stay.
-                @else
-                    Find the perfect accommodation choice tailored for your business, comfort, or leisure needs.
-                @endif
-            </p>
         </div>
+    </section>
 
-        <div class="rooms-grid">
-            @forelse($roomTypes as $type)
+    <!-- CTA Section -->
+    <section class="py-20 bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-bold mb-4">Ready for Your Dream Vacation?</h2>
+            <p class="text-xl mb-8 text-blue-100">Book your stay today and experience luxury like never before</p>
+            <a href="{{ route('rooms') }}" class="inline-block bg-white text-blue-600 hover:bg-blue-50 font-bold py-4 px-10 rounded-lg transition-colors text-lg">
+                Book Now
+            </a>
+        </div>
+    </section>
+
+    <!-- Gallery Preview -->
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Photo Gallery</h2>
+                <p class="text-xl text-gray-600">Explore our beautiful property</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 @php
-                    $roomImage = 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=800';
-                    if (is_array($type->images) && count($type->images) > 0 && $type->images[0] !== 'default.jpg') {
-                        $roomImage = $type->images[0];
-                    } elseif (str_contains(strtolower($type->name), 'deluxe')) {
-                        $roomImage = 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=800';
-                    } elseif (str_contains(strtolower($type->name), 'suite')) {
-                        $roomImage = 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800';
-                    }
+                    $photos = ['🏨', '🏊', '🍽️', '💆']
                 @endphp
-                <div class="room-card animate-fade-in">
-                    <div class="room-image-placeholder" style="background-image: url('{{ $roomImage }}'); background-size: cover; background-position: center; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
-                        <i class="fa-solid fa-bed" style="position: relative; z-index: 5; opacity: 0.9;"></i>
-                        @if($type->available_count > 0)
-                            <span class="room-badge">
-                                {{ $type->available_count }} Available
-                            </span>
-                        @else
-                            <span class="room-badge danger">
-                                Sold Out
-                            </span>
-                        @endif
-                    </div>
-                    <div class="room-body">
-                        <h3 class="room-name">{{ $type->name }}</h3>
-                        <p class="room-description">{{ $type->description }}</p>
-                        
-                        <div class="room-amenities">
-                            @if(is_array($type->amenities))
-                                @foreach($type->amenities as $amenity)
-                                    <span class="amenity-tag">{{ $amenity }}</span>
-                                @endforeach
-                            @elseif(is_string($type->amenities))
-                                @foreach(json_decode($type->amenities, true) ?? explode(',', $type->amenities) as $amenity)
-                                    <span class="amenity-tag">{{ trim($amenity) }}</span>
-                                @endforeach
-                            @endif
-                            <span class="amenity-tag"><i class="fa-solid fa-users"></i> Max {{ $type->capacity }}</span>
-                        </div>
+                @foreach($photos as $photo)
+                <div class="relative group overflow-hidden rounded-xl h-64 bg-gradient-to-br from-blue-300 to-cyan-300 flex items-center justify-center cursor-pointer">
+                    <div class="text-7xl group-hover:scale-110 transition-transform duration-300">{{ $photo }}</div>
+                </div>
+                @endforeach
+            </div>
 
-                        <div class="room-footer">
-                            <div class="room-price">
-                                ${{ number_format($type->base_price, 2) }} <span>/ night</span>
-                            </div>
-                            
-                            @if($type->available_count > 0)
-                                @if(Auth::check())
-                                    @if(auth()->user()->isCustomer())
-                                        <a href="{{ route('customer.book', $type->id) }}?check_in_date={{ $checkIn }}&check_out_date={{ $checkOut }}&guests={{ $guestsCount }}" class="btn btn-primary" style="text-decoration: none;">
-                                            Book Now
-                                        </a>
-                                    @else
-                                        <button class="btn btn-outline" disabled>Log in as Customer</button>
-                                    @endif
-                                @else
-                                    <a href="{{ route('login') }}?redirect_to={{ urlencode(route('customer.book', $type->id)) }}&check_in_date={{ $checkIn }}&check_out_date={{ $checkOut }}&guests={{ $guestsCount }}" class="btn btn-primary" style="text-decoration: none;">
-                                        Book Now
-                                    </a>
-                                @endif
-                            @else
-                                <button class="btn btn-outline" style="border-color: var(--border-color); color: var(--text-muted);" disabled>Unavailable</button>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div style="grid-column: 1 / -1; text-align: center; padding: 4rem; color: var(--text-secondary);">
-                    <i class="fa-solid fa-circle-exclamation" style="font-size: 3rem; margin-bottom: 1.5rem; color: var(--text-muted);"></i>
-                    <h3>No room types defined yet.</h3>
-                    <p>Please log in as Administrator to add room types to the system.</p>
-                </div>
-            @endforelse
+            <div class="text-center mt-12">
+                <a href="{{ route('gallery') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
+                    View Full Gallery
+                </a>
+            </div>
         </div>
     </section>
 
-    <!-- Marketing Features Grid -->
-    <section class="features-section">
-        <div class="section-header" style="margin-top: 0;">
-            <span class="section-tag">Elite Amenities</span>
-            <h2 class="section-title">{{ $welcomeTitle }}</h2>
-            <p class="section-desc">{{ $welcomeDescription }}</p>
-        </div>
+    <!-- FAQ Preview -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+                <p class="text-xl text-gray-600">Find answers to common questions</p>
+            </div>
 
-        <div class="features-grid">
-            @php
-                $services = json_decode(\App\Models\Setting::getValue('services_list', '[]'), true) ?: [];
-            @endphp
-            @forelse($services as $service)
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fa-solid {{ $service['icon'] ?? 'fa-star' }}"></i>
-                    </div>
-                    <h3 style="margin-bottom: 0.75rem;">{{ $service['name'] ?? '' }}</h3>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">{{ $service['description'] ?? '' }}</p>
-                </div>
-            @empty
-                <!-- Fallback defaults -->
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fa-solid fa-bell-concierge"></i>
-                    </div>
-                    <h3 style="margin-bottom: 0.75rem;">24/7 Concierge</h3>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">Our top-tier professional concierge team is dedicated to supporting your every request, any hour of the day.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fa-solid fa-water-ladder"></i>
-                    </div>
-                    <h3 style="margin-bottom: 0.75rem;">Infinite Pool</h3>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">Bathe in our heated outdoor infinity-edge swimming pool overlooking the stunning golden sea horizons.</p>
-                </div>
+            <div class="space-y-4">
+                @php
+                    $faqs = [
+                        ['q' => 'What time is check-in?', 'a' => 'Check-in is available from 3:00 PM. Early check-in may be available upon request.'],
+                        ['q' => 'Is WiFi free?', 'a' => 'Yes, high-speed WiFi is complimentary for all guests throughout the property.'],
+                        ['q' => 'Do you have parking?', 'a' => 'Yes, we offer both self-parking and valet parking services for our guests.'],
+                    ]
+                @endphp
+                @foreach($faqs as $faq)
+                <details class="bg-white rounded-lg shadow-md p-6 group cursor-pointer hover:shadow-lg transition-shadow">
+                    <summary class="font-bold text-gray-800 flex justify-between items-center">
+                        {{ $faq['q'] }}
+                        <span class="group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <p class="text-gray-600 mt-4">{{ $faq['a'] }}</p>
+                </details>
+                @endforeach
+            </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fa-solid fa-utensils"></i>
-                    </div>
-                    <h3 style="margin-bottom: 0.75rem;">Fine Dining</h3>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">Indulge in high-end local culinary delights prepared fresh by award-winning Michelin-star chefs.</p>
-                </div>
-            @endforelse
+            <div class="text-center mt-12">
+                <a href="{{ route('faqs') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
+                    See All FAQs
+                </a>
+            </div>
         </div>
     </section>
 
-    <!-- Contact & Map Address Section -->
-    <section class="contact-map-section">
-        <div class="contact-info-card">
-            <h2 style="font-size: 1.75rem; margin-bottom: 1.5rem; font-weight: 700;">Get in Touch</h2>
-            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 2.5rem;">
-                Have questions or special reservation requirements? Reach out directly to our guest experience officers.
-            </p>
-
-            <div class="contact-row">
-                <div class="contact-row-icon">
-                    <i class="fa-solid fa-phone"></i>
+    <!-- Footer Preview -->
+    <section class="py-16 bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h4 class="font-bold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-300 text-sm">
+                        <li><a href="{{ route('rooms') }}" class="hover:text-white transition">Rooms</a></li>
+                        <li><a href="{{ route('services') }}" class="hover:text-white transition">Services</a></li>
+                        <li><a href="{{ route('gallery') }}" class="hover:text-white transition">Gallery</a></li>
+                        <li><a href="{{ route('faqs') }}" class="hover:text-white transition">FAQs</a></li>
+                    </ul>
                 </div>
                 <div>
-                    <div class="contact-label">Call Support</div>
-                    <div class="contact-value">{{ $contactPhone }}</div>
-                </div>
-            </div>
-
-            <div class="contact-row">
-                <div class="contact-row-icon">
-                    <i class="fa-solid fa-envelope"></i>
-                </div>
-                <div>
-                    <div class="contact-label">Email Address</div>
-                    <div class="contact-value">{{ $contactEmail }}</div>
-                </div>
-            </div>
-
-            <div class="contact-row">
-                <div class="contact-row-icon" style="background: var(--primary-glow); color: var(--primary);">
-                    <i class="fa-solid fa-location-dot"></i>
+                    <h4 class="font-bold mb-4">Support</h4>
+                    <ul class="space-y-2 text-gray-300 text-sm">
+                        <li><a href="{{ route('contact') }}" class="hover:text-white transition">Contact</a></li>
+                        <li><a href="{{ route('privacy') }}" class="hover:text-white transition">Privacy</a></li>
+                        <li><a href="{{ route('terms') }}" class="hover:text-white transition">Terms</a></li>
+                        <li><a href="{{ route('blog.index') }}" class="hover:text-white transition">Blog</a></li>
+                    </ul>
                 </div>
                 <div>
-                    <div class="contact-label">Resort Location</div>
-                    <div class="contact-value">Golden Coast Beach Boulevard, Suite A, Victoria</div>
+                    <h4 class="font-bold mb-4">Contact</h4>
+                    <p class="text-gray-300 text-sm mb-2">📞 +1 (800) 555-FLOW</p>
+                    <p class="text-gray-300 text-sm">📧 info@stayflow.com</p>
                 </div>
-            </div>
-        </div>
-
-        <div class="map-wrapper">
-            @if($mapAddress && (str_contains($mapAddress, 'http') || str_contains($mapAddress, '<iframe')))
-                @if(str_contains($mapAddress, '<iframe'))
-                    {!! $mapAddress !!}
-                @else
-                    <iframe src="{{ $mapAddress }}" allowfullscreen="" loading="lazy"></iframe>
-                @endif
-            @else
-                <div style="width:100%; height:100%; background: linear-gradient(135deg, var(--background) 0%, var(--border-color) 100%); display: flex; flex-direction:column; align-items: center; justify-content: center; color: var(--text-secondary); text-align: center; padding: 2rem;">
-                    <i class="fa-solid fa-map-location-dot" style="font-size: 3.5rem; margin-bottom: 1rem; color: var(--primary);"></i>
-                    <h4 style="margin-bottom: 0.5rem;">Map Address Configured</h4>
-                    <p style="font-size: 0.875rem; max-width: 320px;">
-                        {{ $mapAddress ?: 'Golden Coast Beach Boulevard, Suite A, Victoria' }}
-                    </p>
-                </div>
-            @endif
-        </div>
-    </section>
-
-    @if(\App\Models\Setting::getValue('promo_popup_enabled', '0') == '1')
-        @php
-            $promoTitle = \App\Models\Setting::getValue('promo_popup_title', 'Special Offer!');
-            $promoContent = \App\Models\Setting::getValue('promo_popup_content');
-            $promoImage = \App\Models\Setting::getValue('promo_popup_image') ?: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=800';
-            $promoCoupon = \App\Models\Setting::getValue('promo_popup_coupon');
-        @endphp
-        <!-- Promo Modal Overlay -->
-        <div class="promo-modal-overlay" id="promoModalOverlay">
-            <div class="promo-modal-content">
-                <button type="button" class="promo-modal-close" onclick="closePromoModal()"><i class="fa-solid fa-xmark"></i></button>
-                <div class="promo-modal-banner" style="background-image: url('{{ $promoImage }}');"></div>
-                <div class="promo-modal-body">
-                    <span class="promo-badge">Limited Time Offer</span>
-                    <h2 class="promo-title">{{ $promoTitle }}</h2>
-                    <p class="promo-text">{{ $promoContent }}</p>
-                    
-                    @if($promoCoupon)
-                        <div class="promo-coupon-container">
-                            <span class="promo-coupon-code" id="promoCouponCode">{{ $promoCoupon }}</span>
-                            <button type="button" class="promo-copy-btn" id="promoCopyBtn" onclick="copyPromoCoupon()">
-                                <i class="fa-solid fa-copy"></i> Copy Code
-                            </button>
-                        </div>
-                    @endif
-                    
-                    <div>
-                        <button type="button" class="btn btn-outline" onclick="closePromoModal()" style="padding: 0.75rem 2rem;">Dismiss</button>
+                <div>
+                    <h4 class="font-bold mb-4">Follow Us</h4>
+                    <div class="flex gap-4 text-xl">
+                        <a href="#" class="hover:text-cyan-400 transition">📱</a>
+                        <a href="#" class="hover:text-cyan-400 transition">🐦</a>
+                        <a href="#" class="hover:text-cyan-400 transition">📷</a>
                     </div>
                 </div>
             </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-gray-400">
+                <p>&copy; 2026 stayFlow. All rights reserved. | Luxury Hotel Management Platform</p>
+            </div>
         </div>
-    @endif
-@endsection
-
-@section('scripts')
-<script>
-    // Promo Modal script
-    function closePromoModal() {
-        const overlay = document.getElementById('promoModalOverlay');
-        if (overlay) overlay.classList.remove('active');
-    }
-
-    function copyPromoCoupon() {
-        const couponText = document.getElementById('promoCouponCode').innerText;
-        navigator.clipboard.writeText(couponText).then(() => {
-            const copyBtn = document.getElementById('promoCopyBtn');
-            const originalHtml = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-            copyBtn.style.background = 'var(--success)';
-            setTimeout(() => {
-                copyBtn.innerHTML = originalHtml;
-                copyBtn.style.background = 'var(--primary)';
-            }, 2000);
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const overlay = document.getElementById('promoModalOverlay');
-        if (overlay && !sessionStorage.getItem('promo_popup_shown')) {
-            setTimeout(() => {
-                overlay.classList.add('active');
-                sessionStorage.setItem('promo_popup_shown', 'true');
-            }, 1500);
-        }
-    });
-
-    // Hero Slider script
-    let currentSlideIndex = 0;
-    const slides = document.querySelectorAll('.slide');
-    const dots = document.querySelectorAll('.dot');
-    let sliderTimer = null;
-
-    function showSlide(index) {
-        if (slides.length === 0) return;
-        
-        // Reset slide classes
-        slides.forEach(slide => slide.classList.remove('active'));
-        if (dots.length > 0) {
-            dots.forEach(dot => dot.classList.remove('active'));
-        }
-
-        currentSlideIndex = (index + slides.length) % slides.length;
-        slides[currentSlideIndex].classList.add('active');
-        if (dots.length > 0) {
-            dots[currentSlideIndex].classList.add('active');
-        }
-        
-        // Reset autoplay timer
-        resetTimer();
-    }
-
-    function moveSlide(direction) {
-        showSlide(currentSlideIndex + direction);
-    }
-
-    function setSlide(index) {
-        showSlide(index);
-    }
-
-    function resetTimer() {
-        if (sliderTimer) clearInterval(sliderTimer);
-        if (slides.length > 1) {
-            sliderTimer = setInterval(() => {
-                moveSlide(1);
-            }, 6000); // Auto transition every 6 seconds
-        }
-    }
-
-    // Initialize
-    if (slides.length > 0) {
-        resetTimer();
-    }
-</script>
+    </section>
+</div>
 @endsection

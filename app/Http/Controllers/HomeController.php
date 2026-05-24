@@ -100,7 +100,6 @@ class HomeController extends Controller
         $page = Page::where('slug', $slug)->where('is_active', true)->firstOrFail();
         return view('page', compact('page'));
     }
-}
 
     public function faqs()
     {
@@ -146,3 +145,4 @@ class HomeController extends Controller
     {
         return view('terms');
     }
+}
