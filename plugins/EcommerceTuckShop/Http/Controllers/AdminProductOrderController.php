@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class AdminProductOrderController extends Controller
 {
-    public function products()
+    public function products(Request $request)
     {
         $user = auth()->user();
         $restrictedType = null;
@@ -25,10 +25,13 @@ class AdminProductOrderController extends Controller
         $query = Product::query();
         if ($restrictedType) {
             $query->where('type', $restrictedType);
+        } elseif ($request->filled('type') && in_array($request->type, ['tuck_shop', 'restaurant'], true)) {
+            $query->where('type', $request->type);
         }
 
         $products = $query->orderBy('type')->orderBy('name')->get();
-        return view('admin.products', compact('products'));
+        $currentType = $restrictedType ?: $request->query('type', 'all');
+        return view('admin.products', compact('products', 'currentType', 'restrictedType'));
     }
 
     public function storeProduct(Request $request)
@@ -147,6 +150,11 @@ class AdminProductOrderController extends Controller
             $query->whereHas('orderItems.product', function($q) use ($restrictedType) {
                 $q->where('type', $restrictedType);
             });
+        } elseif ($request->filled('type') && in_array($request->type, ['tuck_shop', 'restaurant'], true)) {
+            $type = $request->type;
+            $query->whereHas('orderItems.product', function($q) use ($type) {
+                $q->where('type', $type);
+            });
         }
 
         if ($request->filled('status')) {
@@ -155,7 +163,8 @@ class AdminProductOrderController extends Controller
 
         $orders = $query->orderBy('id', 'desc')->paginate(15);
         $currency = Setting::getValue('currency', 'USD');
-        return view('admin.orders', compact('orders', 'currency'));
+        $currentType = $restrictedType ?: $request->query('type', 'all');
+        return view('admin.orders', compact('orders', 'currency', 'currentType', 'restrictedType'));
     }
 
     public function updateOrderStatus(Order $order, Request $request)
@@ -193,5 +202,43 @@ class AdminProductOrderController extends Controller
         }
 
         return redirect()->back()->with('success', 'Order status updated.');
+    }
+
+    public function orderDocument(Order $order)
+    {
+        $this->authorizeOrderAccess($order);
+
+        $order->load(['orderItems.product', 'user', 'booking.room.roomType']);
+        $currency = Setting::getValue('currency', 'USD');
+        $isSuccessful = $order->payment_status === 'paid'
+            || $order->payment_method === 'room_charge'
+            || $order->status === 'delivered';
+        $documentType = $isSuccessful ? 'receipt' : 'invoice';
+
+        return view('admin.order-document', compact('order', 'currency', 'documentType', 'isSuccessful'));
+    }
+
+    protected function authorizeOrderAccess(Order $order): void
+    {
+        $user = auth()->user();
+        $restrictedType = null;
+
+        if (!$user->isAdmin() && !$user->isSuperAdmin()) {
+            if ($user->role === 'tuck_shop_manager' || ($user->hasFunction('manage_tuck_shop') && !$user->hasFunction('manage_restaurant'))) {
+                $restrictedType = 'tuck_shop';
+            } elseif ($user->role === 'restaurant_manager' || ($user->hasFunction('manage_restaurant') && !$user->hasFunction('manage_tuck_shop'))) {
+                $restrictedType = 'restaurant';
+            }
+        }
+
+        if (!$restrictedType) {
+            return;
+        }
+
+        $hasPermittedProduct = $order->orderItems()->whereHas('product', function($q) use ($restrictedType) {
+            $q->where('type', $restrictedType);
+        })->exists();
+
+        abort_unless($hasPermittedProduct, 403, 'Unauthorized. You cannot view this order document.');
     }
 }

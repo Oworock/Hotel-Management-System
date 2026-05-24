@@ -1,84 +1,141 @@
-@extends('layouts.admin')
+@extends('layouts.app')
+
+@section('title', 'Amenity Management')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 p-6">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Amenity Management</h1>
-            <button onclick="openModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                + Add Amenity
-            </button>
+@php
+    $categories = [
+        'room' => ['label' => 'Room', 'icon' => 'fa-bed'],
+        'hotel' => ['label' => 'Hotel', 'icon' => 'fa-hotel'],
+        'dining' => ['label' => 'Dining', 'icon' => 'fa-utensils'],
+        'activity' => ['label' => 'Activity', 'icon' => 'fa-person-swimming'],
+        'service' => ['label' => 'Service', 'icon' => 'fa-bell-concierge'],
+    ];
+@endphp
+
+<div class="admin-page-shell animate-fade-in">
+    <div class="glass-panel admin-page-header">
+        <div>
+            <h1 class="admin-page-title">Amenity Management</h1>
+            <p class="admin-page-subtitle">Edit the standard amenities used by room types, hotel pages, and guest-facing content.</p>
         </div>
+        <button type="button" onclick="openAmenityModal()" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Add Amenity
+        </button>
+    </div>
 
-        @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">{{ session('success') }}</div>
-        @endif
+    @if(session('success'))
+        <div class="alert alert-success" style="margin-bottom:1rem;">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger" style="margin-bottom:1rem;">{{ session('error') }}</div>
+    @endif
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach(collect([['category' => 'room', 'icon' => '🛏️'], ['category' => 'hotel', 'icon' => '🏨'], ['category' => 'dining', 'icon' => '🍽️'], ['category' => 'activity', 'icon' => '🎮'], ['category' => 'service', 'icon' => '🔔']]) as $cat)
-            <div>
-                <h3 class="text-lg font-bold text-gray-800 mb-3 capitalize">{{ $cat['icon'] }} {{ $cat['category'] }} Amenities</h3>
-                <div class="space-y-2">
-                    @forelse(collect($amenities)->where('category', $cat['category']) as $amenity)
-                    <div class="bg-white rounded-lg p-3 shadow hover:shadow-md transition flex justify-between items-center">
-                        <div>
-                            <p class="font-semibold text-gray-800">{{ $amenity->icon }} {{ $amenity->name }}</p>
-                            <p class="text-xs text-gray-600">{{ Str::limit($amenity->description, 50) }}</p>
+    <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+        @foreach($categories as $category => $meta)
+            <div class="glass-panel">
+                <h2 style="font-size:1.05rem;margin:0 0 1rem;color:var(--text-primary);display:flex;align-items:center;gap:0.5rem;">
+                    <i class="fa-solid {{ $meta['icon'] }}" style="color:var(--primary);"></i> {{ $meta['label'] }} Amenities
+                </h2>
+                <div style="display:grid;gap:0.75rem;">
+                    @forelse($amenities->where('category', $category) as $amenity)
+                        <div style="border:1px solid var(--border-color);background:var(--surface);border-radius:var(--radius-sm);padding:0.85rem;">
+                            <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:flex-start;">
+                                <div>
+                                    <strong style="color:var(--text-primary);">{{ $amenity->icon }} {{ $amenity->name }}</strong>
+                                    <p style="margin:0.25rem 0 0;color:var(--text-secondary);font-size:0.8rem;line-height:1.5;">{{ \Illuminate\Support\Str::limit($amenity->description ?: 'No description added.', 80) }}</p>
+                                </div>
+                                <span class="status-pill {{ $amenity->is_active ? 'active' : '' }}">{{ $amenity->is_active ? 'Active' : 'Off' }}</span>
+                            </div>
+                            <div class="admin-card-actions" style="margin-top:0.85rem;">
+                                <button type="button" class="btn btn-outline" onclick='editAmenity(@json($amenity))'><i class="fa-solid fa-pen"></i> Edit</button>
+                                <form method="POST" action="{{ route('super_admin.amenities.delete', $amenity) }}" onsubmit="return confirm('Delete this amenity?')" style="margin:0;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </div>
                         </div>
-                        <button onclick="deleteAmenity({{ $amenity->id }})" class="text-red-600 hover:text-red-800">×</button>
-                    </div>
                     @empty
-                    <div class="bg-gray-100 rounded-lg p-3 text-gray-500 text-sm">No amenities</div>
+                        <div class="empty-state" style="padding:1rem;">No amenities yet.</div>
                     @endforelse
                 </div>
             </div>
-            @endforeach
-        </div>
+        @endforeach
     </div>
 </div>
 
-<div id="amenityModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">Add Amenity</h2>
-        <form method="POST" action="{{ route('super_admin.amenities.store') }}">
+<div id="amenityModal" class="modal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="amenityModalTitle" style="margin:0;color:var(--text-primary);">Add Amenity</h2>
+            <button type="button" class="btn btn-outline" onclick="closeAmenityModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="amenityForm" method="POST" action="{{ route('super_admin.amenities.store') }}">
             @csrf
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Name</label>
-                <input type="text" name="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" required>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="name">Name</label>
+                    <input type="text" name="name" id="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="icon">Icon</label>
+                    <input type="text" name="icon" id="icon" class="form-control" maxlength="50" placeholder="fa-wifi or WiFi">
+                </div>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Icon (emoji)</label>
-                <input type="text" name="icon" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" maxlength="2">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="category">Category</label>
+                    <select name="category" id="category" class="form-control" required>
+                        @foreach($categories as $category => $meta)
+                            <option value="{{ $category }}">{{ $meta['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="order">Display Order</label>
+                    <input type="number" name="order" id="order" class="form-control" min="0" value="0">
+                </div>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Category</label>
-                <select name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" required>
-                    <option value="room">Room</option>
-                    <option value="hotel">Hotel</option>
-                    <option value="dining">Dining</option>
-                    <option value="activity">Activity</option>
-                    <option value="service">Service</option>
-                </select>
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea name="description" id="description" class="form-control" rows="4"></textarea>
             </div>
-            <div class="mb-6">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"></textarea>
-            </div>
-            <div class="flex gap-3">
-                <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-semibold">Save</button>
-                <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 transition">Cancel</button>
+            <label class="form-checkbox"><input type="checkbox" name="is_active" id="is_active" value="1" checked> <span>Active</span></label>
+            <div class="admin-card-actions" style="justify-content:flex-end;">
+                <button type="button" class="btn btn-outline" onclick="closeAmenityModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Amenity</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-function openModal() { document.getElementById('amenityModal').classList.remove('hidden'); }
-function closeModal() { document.getElementById('amenityModal').classList.add('hidden'); }
-function deleteAmenity(id) {
-    if(confirm('Delete this amenity?')) {
-        document.location.href = `/super-admin/amenities/${id}`;
-    }
+function openAmenityModal() {
+    const form = document.getElementById('amenityForm');
+    form.reset();
+    form.action = "{{ route('super_admin.amenities.store') }}";
+    document.getElementById('amenityModalTitle').textContent = 'Add Amenity';
+    document.getElementById('is_active').checked = true;
+    document.getElementById('order').value = 0;
+    document.getElementById('amenityModal').classList.add('active');
+}
+
+function editAmenity(amenity) {
+    const form = document.getElementById('amenityForm');
+    form.action = `/super-admin/amenities/${amenity.id}/update`;
+    document.getElementById('amenityModalTitle').textContent = 'Edit Amenity';
+    document.getElementById('name').value = amenity.name || '';
+    document.getElementById('icon').value = amenity.icon || '';
+    document.getElementById('category').value = amenity.category || 'hotel';
+    document.getElementById('description').value = amenity.description || '';
+    document.getElementById('order').value = amenity.order || 0;
+    document.getElementById('is_active').checked = Boolean(amenity.is_active);
+    document.getElementById('amenityModal').classList.add('active');
+}
+
+function closeAmenityModal() {
+    document.getElementById('amenityModal').classList.remove('active');
 }
 </script>
 @endsection

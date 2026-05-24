@@ -1,0 +1,1 @@
+<footer class="ocean-site-footer"><strong>{{ \App\Models\Setting::getValue('hotel_name','Aetheria') }}</strong><nav><a href="/rooms">Rooms</a><a href="/gallery">Views</a><a href="/contact">Map</a></nav><span>{!! \App\Models\Setting::getValue('global_footer', \App\Models\Setting::getValue('physical_address','Golden Coast Beach, Suite A')) !!}</span></footer>

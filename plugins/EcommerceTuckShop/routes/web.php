@@ -30,6 +30,7 @@ Route::middleware('web')->group(function () {
                 Route::post('/products/{product}/update', [AdminProductOrderController::class, 'updateProduct'])->name('admin.products.update');
                 Route::post('/products/{product}/delete', [AdminProductOrderController::class, 'deleteProduct'])->name('admin.products.delete');
                 Route::get('/orders', [AdminProductOrderController::class, 'orders'])->name('admin.orders');
+                Route::get('/orders/{order}/document', [AdminProductOrderController::class, 'orderDocument'])->name('admin.orders.document');
                 Route::post('/orders/{order}/status', [AdminProductOrderController::class, 'updateOrderStatus'])->name('admin.orders.status');
             });
         });

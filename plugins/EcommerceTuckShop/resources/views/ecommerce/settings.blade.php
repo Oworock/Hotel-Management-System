@@ -71,6 +71,22 @@
                     </select>
                     <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">Turn storefront catalog sales on or off instantly.</small>
                 </div>
+
+                <div class="glass-panel" style="padding: 1rem; border-radius: var(--radius-sm);">
+                    <h4 style="margin: 0 0 1rem; color: var(--text-primary); font-size: 1rem;">Sales Channels</h4>
+                    <div style="display: grid; gap: 1rem;">
+                        <label style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--text-primary); font-weight: 600;">
+                            <span><i class="fa-solid fa-basket-shopping" style="color: var(--primary); margin-right: 0.5rem;"></i> Enable Tuck Shop</span>
+                            <input type="hidden" name="ecommerce_tuck_shop_enabled" value="0">
+                            <input type="checkbox" name="ecommerce_tuck_shop_enabled" value="1" {{ old('ecommerce_tuck_shop_enabled', $settings['ecommerce_tuck_shop_enabled']) === '1' ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary);">
+                        </label>
+                        <label style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--text-primary); font-weight: 600;">
+                            <span><i class="fa-solid fa-utensils" style="color: var(--secondary); margin-right: 0.5rem;"></i> Enable Restaurant</span>
+                            <input type="hidden" name="ecommerce_restaurant_enabled" value="0">
+                            <input type="checkbox" name="ecommerce_restaurant_enabled" value="1" {{ old('ecommerce_restaurant_enabled', $settings['ecommerce_restaurant_enabled']) === '1' ? 'checked' : '' }} style="width: 18px; height: 18px; accent-color: var(--primary);">
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <!-- Right Side: Shipping & Taxes -->
@@ -107,6 +123,16 @@
                         <span style="position: absolute; right: 12px; font-weight: 600; color: var(--text-secondary);">%</span>
                     </div>
                     <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">Sales tax percentage applied to cart checkout. (Default matches global tax: {{ \App\Models\Setting::getValue('tax_rate', '12') }}%)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="ecommerce_tuck_shop_name" style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Tuck Shop Menu Label</label>
+                    <input type="text" id="ecommerce_tuck_shop_name" name="ecommerce_tuck_shop_name" class="form-control" value="{{ old('ecommerce_tuck_shop_name', $settings['ecommerce_tuck_shop_name']) }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="ecommerce_restaurant_name" style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Restaurant Menu Label</label>
+                    <input type="text" id="ecommerce_restaurant_name" name="ecommerce_restaurant_name" class="form-control" value="{{ old('ecommerce_restaurant_name', $settings['ecommerce_restaurant_name']) }}" required>
                 </div>
             </div>
         </div>

@@ -24,9 +24,11 @@
         <button type="button" class="tab-btn" onclick="switchTab(event, 'slider')" style="background: none; border: none; padding: 0.75rem 1.25rem; font-family: inherit; font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-bottom: 3px solid transparent; transition: all var(--transition-fast); display: flex; align-items: center; gap: 0.5rem;">
             <i class="fa-solid fa-images"></i> Hero Slider
         </button>
+        {{-- Page CMS settings are intentionally hidden from System Configuration.
         <button type="button" class="tab-btn" onclick="switchTab(event, 'cms')" style="background: none; border: none; padding: 0.75rem 1.25rem; font-family: inherit; font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-bottom: 3px solid transparent; transition: all var(--transition-fast); display: flex; align-items: center; gap: 0.5rem;">
             <i class="fa-solid fa-file-lines"></i> Pages CMS
         </button>
+        --}}
         <button type="button" class="tab-btn" onclick="switchTab(event, 'coupons')" style="background: none; border: none; padding: 0.75rem 1.25rem; font-family: inherit; font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; border-bottom: 3px solid transparent; transition: all var(--transition-fast); display: flex; align-items: center; gap: 0.5rem;">
             <i class="fa-solid fa-tags"></i> Coupons & Marketing
         </button>
@@ -84,8 +86,13 @@
             </div>
 
             <div class="form-group">
-                <label for="map_address" class="form-label">Google Maps Embed URL / Address</label>
-                <textarea name="map_address" id="map_address" class="form-control" rows="3" placeholder="Embed code link or raw text address...">{{ $settings['map_address'] }}</textarea>
+                <label for="physical_address" class="form-label">Physical Address</label>
+                <textarea name="physical_address" id="physical_address" class="form-control" rows="3" placeholder="Street address guests can follow or copy...">{{ $settings['physical_address'] }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="map_address" class="form-label">Google Maps Embed URL / Iframe Code</label>
+                <textarea name="map_address" id="map_address" class="form-control" rows="3" placeholder="Paste a Google Maps embed URL or full iframe code...">{{ $settings['map_address'] }}</textarea>
             </div>
         </div>
 
@@ -148,6 +155,19 @@
                         </div>
                     @endif
                     <input type="file" name="logo_image" id="logo_image" class="form-control" accept="image/*">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label for="auth_background_image" class="form-label">Login & Register Background Image</label>
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem; align-items: center;">
+                    <div style="height: 110px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); background: var(--background);">
+                        <img src="{{ $settings['auth_background_image'] }}" alt="Auth Background" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div>
+                        <input type="file" name="auth_background_image" id="auth_background_image" class="form-control" accept="image/*">
+                        <p class="form-hint">Used behind login, register, and password reset pages. Recommended: 1800px wide hospitality photo.</p>
+                    </div>
                 </div>
             </div>
 
@@ -220,8 +240,8 @@
                 <label class="form-label" style="font-weight:700;">Active Platform Payment System</label>
                 <div style="display: flex; gap: 2rem; margin: 1rem 0; flex-wrap: wrap;">
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <input type="radio" name="active_payment_gateway" value="card_simulation" {{ $settings['active_payment_gateway'] == 'card_simulation' ? 'checked' : '' }}>
-                        <span>Interactive 3D Card Simulator</span>
+                        <input type="radio" name="active_payment_gateway" value="disabled" {{ $settings['active_payment_gateway'] == 'disabled' ? 'checked' : '' }}>
+                        <span>Disabled until real gateway keys are configured</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                         <input type="radio" name="active_payment_gateway" value="paystack" {{ $settings['active_payment_gateway'] == 'paystack' ? 'checked' : '' }}>
@@ -232,6 +252,7 @@
                         <span style="color:#f5a623; font-weight:600;"><i class="fa-solid fa-money-bill-wave"></i> Flutterwave Portal</span>
                     </label>
                 </div>
+                <p style="color:var(--text-secondary);font-size:.9rem;line-height:1.6;">Customer bookings will only be marked paid after Paystack or Flutterwave verifies the transaction on the server.</p>
             </div>
 
             <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1.5rem;">
@@ -319,6 +340,13 @@
 
             <!-- Custom HTTP API Gateway -->
             <div id="sms-fields-custom" class="sms-provider-fields" style="display: none; margin-top: 1.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1.5rem; background: rgba(255, 255, 255, 0.02);">
+                @php
+                    $customSmsHeaders = json_decode($settings['custom_sms_headers'] ?: '{}', true) ?: [];
+                    $customSmsPayload = json_decode($settings['custom_sms_payload'] ?: '{}', true) ?: [];
+                    if (empty($customSmsPayload)) {
+                        $customSmsPayload = ['to' => '{to}', 'message' => '{message}'];
+                    }
+                @endphp
                 <h4 style="margin-bottom: 1rem; color: #f44496;"><i class="fa-solid fa-gear"></i> Custom HTTP Gateway API</h4>
                 <div class="form-row">
                     <div class="form-group">
@@ -336,12 +364,36 @@
                 </div>
                 <div class="form-row" style="margin-top: 1rem;">
                     <div class="form-group">
-                        <label for="custom_sms_headers" class="form-label">HTTP Headers (JSON Format)</label>
-                        <textarea name="custom_sms_headers" id="custom_sms_headers" class="form-control" rows="3" style="font-family: monospace; font-size: 0.9rem;">{{ $settings['custom_sms_headers'] }}</textarea>
+                        <label class="form-label">HTTP Headers</label>
+                        <div id="super-sms-header-rows" style="display:grid;gap:0.75rem;">
+                            @forelse($customSmsHeaders as $key => $value)
+                                <div class="sms-pair-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;">
+                                    <input type="text" name="custom_sms_header_keys[]" class="form-control" value="{{ $key }}" placeholder="Header key">
+                                    <input type="text" name="custom_sms_header_values[]" class="form-control" value="{{ $value }}" placeholder="Header value">
+                                    <button type="button" class="btn btn-outline" onclick="this.closest('.sms-pair-row').remove()"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            @empty
+                                <div class="sms-pair-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;">
+                                    <input type="text" name="custom_sms_header_keys[]" class="form-control" placeholder="Authorization">
+                                    <input type="text" name="custom_sms_header_values[]" class="form-control" placeholder="Bearer token">
+                                    <button type="button" class="btn btn-outline" onclick="this.closest('.sms-pair-row').remove()"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            @endforelse
+                        </div>
+                        <button type="button" class="btn btn-outline" style="margin-top:0.75rem;" onclick="addSmsPairRow('super-sms-header-rows', 'custom_sms_header_keys[]', 'custom_sms_header_values[]')"><i class="fa-solid fa-plus"></i> Add Header</button>
                     </div>
                     <div class="form-group">
-                        <label for="custom_sms_payload" class="form-label">HTTP Body/Payload Template (JSON Format)</label>
-                        <textarea name="custom_sms_payload" id="custom_sms_payload" class="form-control" rows="3" style="font-family: monospace; font-size: 0.9rem;">{{ $settings['custom_sms_payload'] }}</textarea>
+                        <label class="form-label">Body / Query Parameters</label>
+                        <div id="super-sms-payload-rows" style="display:grid;gap:0.75rem;">
+                            @foreach($customSmsPayload as $key => $value)
+                                <div class="sms-pair-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;">
+                                    <input type="text" name="custom_sms_payload_keys[]" class="form-control" value="{{ $key }}" placeholder="Parameter key">
+                                    <input type="text" name="custom_sms_payload_values[]" class="form-control" value="{{ $value }}" placeholder="{to} or {message}">
+                                    <button type="button" class="btn btn-outline" onclick="this.closest('.sms-pair-row').remove()"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            @endforeach
+                        </div>
+                        <button type="button" class="btn btn-outline" style="margin-top:0.75rem;" onclick="addSmsPairRow('super-sms-payload-rows', 'custom_sms_payload_keys[]', 'custom_sms_payload_values[]')"><i class="fa-solid fa-plus"></i> Add Parameter</button>
                     </div>
                 </div>
             </div>
@@ -458,12 +510,23 @@
 
     <!-- TAB: Hero Slider -->
     <div id="tab-slider" class="tab-content" style="display: none; margin-top: 1.5rem;">
-        <div style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 2rem; align-items: start;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+            <div>
+                <h3 style="font-size:1.15rem;font-weight:700;margin:0;"><i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Current Hero Slides</h3>
+                <p style="color:var(--text-secondary);margin:.35rem 0 0;">Manage homepage slide content and visual order.</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="openCreateSlideModal()"><i class="fa-solid fa-plus"></i> Create Hero Slide</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
             <!-- Create Slide Form -->
-            <div class="glass-panel" style="padding: 1.5rem; border-color: var(--border-color); height: fit-content;">
-                <h3 style="font-size: 1.15rem; margin-bottom: 1.5rem; font-weight: 700;">
-                    <i class="fa-solid fa-plus" style="color: var(--primary);"></i> Add New Hero Slide
-                </h3>
+            <div class="modal" id="createSlideModal">
+                <div class="modal-content glass-panel modal-lg">
+                    <div class="modal-header">
+                        <h3 style="font-size: 1.15rem; font-weight: 700;">
+                            <i class="fa-solid fa-plus" style="color: var(--primary);"></i> Add New Hero Slide
+                        </h3>
+                        <button type="button" class="theme-toggle" onclick="closeCreateSlideModal()"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 <form action="{{ route('super_admin.slider.store') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1.25rem;">
                     @csrf
                     <div class="form-group">
@@ -509,14 +572,11 @@
                         <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Create Slide
                     </button>
                 </form>
+                </div>
             </div>
 
             <!-- Existing Slides List -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem;">
-                    <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Current Hero Slides
-                </h3>
-
                 @forelse($slides as $slide)
                     <div class="glass-panel" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; position: relative;">
                         <!-- Slide Header Preview -->
@@ -602,6 +662,7 @@
         </div>
     </div>
 
+    {{-- Page CMS settings are intentionally hidden from System Configuration.
     <!-- TAB: Frontend CMS Pages -->
     <div id="tab-cms" class="tab-content" style="display: none;">
         <h3 style="font-size: 1.25rem; margin-bottom: 1.5rem; font-weight: 700; color: var(--text-primary);">
@@ -640,27 +701,13 @@
         </form>
 
         <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 2rem 0;">
-        <h4 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--secondary);">Testimonials Content (JSON format)</h4>
-        <form action="{{ route('super_admin.settings.update') }}" method="POST">
-            @csrf
-            <div class="form-group">
-                <label for="testimonials_list" class="form-label">Guest Testimonials List</label>
-                <textarea name="testimonials_list" id="testimonials_list" class="form-control" rows="5" style="font-family: monospace; font-size: 0.9rem;">{{ $settings['testimonials_list'] }}</textarea>
-                <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">Must be a valid JSON array of objects with keys: <code>name</code>, <code>location</code>, <code>rating</code>, <code>comment</code>, <code>avatar_url</code>.</p>
-            </div>
-
-            <input type="hidden" name="hotel_name" value="{{ $settings['hotel_name'] }}">
-            <input type="hidden" name="currency" value="{{ $settings['currency'] }}">
-            <input type="hidden" name="tax_rate" value="{{ $settings['tax_rate'] }}">
-            <input type="hidden" name="check_in_time" value="{{ $settings['check_in_time'] }}">
-            <input type="hidden" name="check_out_time" value="{{ $settings['check_out_time'] }}">
-            <input type="hidden" name="contact_email" value="{{ $settings['contact_email'] }}">
-            <input type="hidden" name="contact_phone" value="{{ $settings['contact_phone'] }}">
-
-            <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
-                <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Update Testimonials</button>
-            </div>
-        </form>
+        <div class="glass-panel" style="padding: 1rem;">
+            <h4 style="font-size: 1.05rem; font-weight: 600; margin: 0 0 0.5rem; color: var(--secondary);">Testimonials Content</h4>
+            <p style="color: var(--text-secondary); margin: 0 0 1rem;">Testimonials are managed with the production testimonial form instead of raw JSON.</p>
+            <a href="{{ route('admin.testimonials') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                <i class="fa-solid fa-comments"></i> Manage Testimonials
+            </a>
+        </div>
 
         <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 2.5rem 0;">
         
@@ -723,15 +770,27 @@
             </table>
         </div>
     </div>
+    --}}
 
     <!-- TAB: Coupons & Marketing (Promo coupons list and forms) -->
     <div id="tab-coupons" class="tab-content" style="display: none;">
-        <div style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 2rem; align-items: start; margin-top: 1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin:1.5rem 0;">
+            <div>
+                <h3 style="font-size:1.15rem;font-weight:700;margin:0;"><i class="fa-solid fa-tags" style="color: var(--primary);"></i> Active System Promo Codes</h3>
+                <p style="color:var(--text-secondary);margin:.35rem 0 0;">Create and manage discount codes used during booking.</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="openCreateCouponModal()"><i class="fa-solid fa-plus"></i> Create Coupon</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2rem; align-items: stretch; margin-top: 1.5rem;">
             <!-- Create Coupon Form -->
-            <div class="glass-panel" style="padding: 1.5rem; border-color: var(--border-color); height: fit-content;">
-                <h3 style="font-size: 1.15rem; margin-bottom: 1.5rem; font-weight: 700;">
-                    <i class="fa-solid fa-plus" style="color: var(--primary);"></i> Add Discount Coupon
-                </h3>
+            <div class="modal" id="createCouponModal">
+                <div class="modal-content glass-panel">
+                    <div class="modal-header">
+                        <h3 style="font-size: 1.15rem; font-weight: 700;">
+                            <i class="fa-solid fa-plus" style="color: var(--primary);"></i> Add Discount Coupon
+                        </h3>
+                        <button type="button" class="theme-toggle" onclick="closeCreateCouponModal()"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 <form action="{{ route('super_admin.coupons.store') }}" method="POST" style="display: flex; flex-direction: column; gap: 1.25rem;">
                     @csrf
                     <div class="form-group">
@@ -762,14 +821,11 @@
                         <i class="fa-solid fa-tag"></i> Create Promo Coupon
                     </button>
                 </form>
+                </div>
             </div>
 
             <!-- Existing Coupons List -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem;">
-                    <i class="fa-solid fa-tags" style="color: var(--primary);"></i> Active System Promo Codes
-                </h3>
-
                 <div class="table-container">
                     <table class="table">
                         <thead>
@@ -832,6 +888,7 @@
     </div>
 </div>
 
+{{-- Page CMS modals are intentionally hidden from System Configuration.
 <!-- Create Page Modal -->
 <div class="modal" id="createPageModal">
     <div class="modal-content glass-panel" style="max-width: 650px;">
@@ -1000,6 +1057,7 @@
 <form id="deletePageForm" method="POST" style="display: none;">
     @csrf
 </form>
+--}}
 
 @section('scripts')
 <script>
@@ -1056,6 +1114,21 @@
         }
     }
 
+    function addSmsPairRow(containerId, keyName, valueName) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const row = document.createElement('div');
+        row.className = 'sms-pair-row';
+        row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;';
+        row.innerHTML = `
+            <input type="text" name="${keyName}" class="form-control" placeholder="Key">
+            <input type="text" name="${valueName}" class="form-control" placeholder="Value">
+            <button type="button" class="btn btn-outline" onclick="this.closest('.sms-pair-row').remove()"><i class="fa-solid fa-xmark"></i></button>
+        `;
+        container.appendChild(row);
+    }
+
     function generateSlug(titleId, slugId) {
         const titleVal = document.getElementById(titleId).value;
         const slugVal = titleVal.toLowerCase()
@@ -1066,6 +1139,14 @@
     }
 
     // Modal Control
+    function openCreateSlideModal() {
+        document.getElementById('createSlideModal').classList.add('active');
+    }
+
+    function closeCreateSlideModal() {
+        document.getElementById('createSlideModal').classList.remove('active');
+    }
+
     function openCreatePageModal() {
         document.getElementById('createPageModal').classList.add('active');
     }
@@ -1101,6 +1182,14 @@
     }
 
     // Coupons Modals
+    function openCreateCouponModal() {
+        document.getElementById('createCouponModal').classList.add('active');
+    }
+
+    function closeCreateCouponModal() {
+        document.getElementById('createCouponModal').classList.remove('active');
+    }
+
     function openEditCouponModal(coupon) {
         const form = document.getElementById('editCouponForm');
         form.action = '/super-admin/coupons/' + coupon.id + '/update';
@@ -1133,9 +1222,13 @@
         window.addEventListener('click', function(e) {
             const createModal = document.getElementById('createPageModal');
             const editModal = document.getElementById('editPageModal');
+            const slideModal = document.getElementById('createSlideModal');
+            const createCouponModal = document.getElementById('createCouponModal');
             const couponModal = document.getElementById('editCouponModal');
             if (e.target === createModal) closeCreatePageModal();
             if (e.target === editModal) closeEditPageModal();
+            if (e.target === slideModal) closeCreateSlideModal();
+            if (e.target === createCouponModal) closeCreateCouponModal();
             if (e.target === couponModal) closeEditCouponModal();
         });
     });

@@ -3,7 +3,18 @@
 @section('title', 'Inventory & Rooms')
 
 @section('content')
-<div style="display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 2rem;" class="animate-fade-in">
+<div class="admin-page-shell animate-fade-in">
+    <div class="glass-panel admin-page-header">
+        <div>
+            <h1 class="admin-page-title">Inventory & Rooms</h1>
+            <p class="admin-page-subtitle">Manage room categories, editable standard amenities, and room availability from one clean workspace.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openRoomModal()">
+            <i class="fa-solid fa-plus"></i> New Room
+        </button>
+    </div>
+
+<div style="display: grid; grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.55fr); gap: 1.5rem;">
     <!-- Left Column: Manage Room Types -->
     <div style="display: flex; flex-direction: column; gap: 2rem;">
         <!-- Add Room Type -->
@@ -41,16 +52,16 @@
                 
                 <div class="form-group">
                     <label class="form-label">Standard Amenities</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; max-height: 120px; overflow-y: auto; padding-right: 0.5rem;">
-                        <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Free Wi-Fi"> <span>Free Wi-Fi</span></label>
-                        <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Air Conditioning"> <span>Air Cond.</span></label>
-                        <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Flat-screen TV"> <span>Smart TV</span></label>
-                        <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Mini Fridge"> <span>Mini Fridge</span></label>
-                        <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Mini Bar"> <span>Mini Bar</span></label>
-                        <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Balcony"> <span>Balcony</span></label>
-                        <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Ocean View"> <span>Ocean View</span></label>
-                        <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Jacuzzi"> <span>Jacuzzi</span></label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; max-height: 160px; overflow-y: auto; padding-right: 0.5rem;">
+                        @forelse($standardAmenities as $amenity)
+                            <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="{{ $amenity->name }}"> <span>{{ $amenity->icon }} {{ $amenity->name }}</span></label>
+                        @empty
+                            <p style="color:var(--text-secondary);font-size:0.85rem;grid-column:1 / -1;">No room amenities configured yet.</p>
+                        @endforelse
                     </div>
+                    @if(Route::has('super_admin.amenities'))
+                        <a href="{{ route('super_admin.amenities') }}" style="display:inline-flex;margin-top:0.5rem;color:var(--primary);font-size:0.85rem;text-decoration:none;">Edit standard amenities</a>
+                    @endif
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem;">
@@ -62,7 +73,7 @@
         <!-- Room Types List -->
         <div class="glass-panel">
             <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;"><i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Available Categories</h3>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 @foreach($roomTypes as $type)
                     <div style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; background-color: var(--surface);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
@@ -94,6 +105,11 @@
                     </div>
                 @endforeach
             </div>
+            @if($roomTypes->hasPages())
+                <div style="margin-top:1rem;">
+                    {{ $roomTypes->appends(request()->except('types_page'))->links() }}
+                </div>
+            @endif
         </div>
     </div>
     
@@ -164,7 +180,13 @@
                 </tbody>
             </table>
         </div>
+        @if($rooms->hasPages())
+            <div style="padding: 1rem 0 0; display: flex; justify-content: center;">
+                {{ $rooms->appends(request()->except('rooms_page'))->links() }}
+            </div>
+        @endif
     </div>
+</div>
 </div>
 
 <!-- Add Room Modal -->
@@ -186,7 +208,7 @@
             <div class="form-group">
                 <label for="room_type_id" class="form-label">Room Type</label>
                 <select name="room_type_id" id="room_type_id" class="form-control form-select" required>
-                    @foreach($roomTypes as $type)
+                    @foreach($roomTypesList as $type)
                         <option value="{{ $type->id }}">{{ $type->name }} (${{ $type->base_price }})</option>
                     @endforeach
                 </select>
@@ -228,7 +250,7 @@
             <div class="form-group">
                 <label for="edit_room_type_id" class="form-label">Room Type</label>
                 <select name="room_type_id" id="edit_room_type_id" class="form-control form-select" required>
-                    @foreach($roomTypes as $type)
+                    @foreach($roomTypesList as $type)
                         <option value="{{ $type->id }}">{{ $type->name }} (${{ $type->base_price }})</option>
                     @endforeach
                 </select>
@@ -287,15 +309,12 @@
             
             <div class="form-group">
                 <label class="form-label">Standard Amenities</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; max-height: 120px; overflow-y: auto; padding-right: 0.5rem;">
-                    <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Free Wi-Fi"> <span>Free Wi-Fi</span></label>
-                    <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Air Conditioning"> <span>Air Cond.</span></label>
-                    <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Flat-screen TV"> <span>Smart TV</span></label>
-                    <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Mini Fridge"> <span>Mini Fridge</span></label>
-                    <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Mini Bar"> <span>Mini Bar</span></label>
-                    <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Balcony"> <span>Balcony</span></label>
-                    <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Ocean View"> <span>Ocean View</span></label>
-                    <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="Jacuzzi"> <span>Jacuzzi</span></label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; max-height: 160px; overflow-y: auto; padding-right: 0.5rem;">
+                    @forelse($standardAmenities as $amenity)
+                        <label class="form-checkbox"><input type="checkbox" name="amenities[]" value="{{ $amenity->name }}"> <span>{{ $amenity->icon }} {{ $amenity->name }}</span></label>
+                    @empty
+                        <p style="color:var(--text-secondary);font-size:0.85rem;grid-column:1 / -1;">No room amenities configured yet.</p>
+                    @endforelse
                 </div>
             </div>
 

@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') - {{ \App\Models\Setting::getValue('hotel_name', 'Aetheria Grand Hotel') }}</title>
+    <meta name="color-scheme" content="dark light">
+    <script>
+        (function() {
+            const storedTheme = localStorage.getItem('theme');
+            const initialTheme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
+            document.documentElement.setAttribute('data-theme', initialTheme);
+        })();
+    </script>
     @if(View::hasSection('meta_title'))
         <meta name="title" content="@yield('meta_title')">
     @else
@@ -20,34 +28,51 @@
         <meta name="keywords" content="{{ \App\Models\Setting::getValue('meta_keywords', 'hotel, booking, resort, luxury suite') }}">
     @endif
     <link rel="stylesheet" href="/css/style.css">
+    @php
+        $viteManifestPath = public_path('build/manifest.json');
+        $viteManifest = file_exists($viteManifestPath) ? json_decode(file_get_contents($viteManifestPath), true) : [];
+        $viteCss = $viteManifest['resources/css/app.css']['file'] ?? null;
+        $viteJs = $viteManifest['resources/js/app.js']['file'] ?? null;
+    @endphp
+    @if($viteCss)
+        <link rel="stylesheet" href="/build/{{ $viteCss }}">
+    @endif
+    @if($viteJs)
+        <script type="module" src="/build/{{ $viteJs }}"></script>
+    @endif
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        @php
+            $activeTheme = \App\Helpers\ThemeHelper::getActiveTheme();
+            $themeColors = $activeTheme?->colors ?? [];
+            $primary = $themeColors['primary'] ?? \App\Models\Setting::getValue('primary_color', '#6e44ff');
+            $secondary = $themeColors['secondary'] ?? \App\Models\Setting::getValue('secondary_color', '#f44496');
+            $accent = $themeColors['accent'] ?? '#10B981';
+            $background = $themeColors['background'] ?? '#F9FAFB';
+            $text = $themeColors['text'] ?? '#111827';
+            $themeHeaderView = $activeTheme ? "themes.{$activeTheme->slug}.partials.header" : null;
+            $themeFooterView = $activeTheme ? "themes.{$activeTheme->slug}.partials.footer" : null;
+        @endphp
         :root {
-            @if($primary = \App\Models\Setting::getValue('primary_color'))
-                --primary: {{ $primary }};
-                --primary-light: color-mix(in srgb, {{ $primary }} 75%, white);
-                --primary-glow: color-mix(in srgb, {{ $primary }} 15%, transparent);
-            @endif
-            
-            @if($secondary = \App\Models\Setting::getValue('secondary_color'))
-                --secondary: {{ $secondary }};
-                --secondary-light: color-mix(in srgb, {{ $secondary }} 75%, white);
-                --secondary-glow: color-mix(in srgb, {{ $secondary }} 15%, transparent);
-            @endif
+            --primary: {{ $primary }};
+            --primary-light: color-mix(in srgb, {{ $primary }} 75%, white);
+            --primary-glow: color-mix(in srgb, {{ $primary }} 15%, transparent);
+            --secondary: {{ $secondary }};
+            --secondary-light: color-mix(in srgb, {{ $secondary }} 75%, white);
+            --secondary-glow: color-mix(in srgb, {{ $secondary }} 15%, transparent);
+            --accent: {{ $accent }};
+            --theme-background: {{ $background }};
+            --theme-text: {{ $text }};
         }
         [data-theme="dark"] {
-            @if($primary = \App\Models\Setting::getValue('primary_color'))
-                --primary: {{ $primary }};
-                --primary-light: color-mix(in srgb, {{ $primary }} 85%, white);
-                --primary-glow: color-mix(in srgb, {{ $primary }} 25%, transparent);
-            @endif
-            
-            @if($secondary = \App\Models\Setting::getValue('secondary_color'))
-                --secondary: {{ $secondary }};
-                --secondary-light: color-mix(in srgb, {{ $secondary }} 85%, white);
-                --secondary-glow: color-mix(in srgb, {{ $secondary }} 25%, transparent);
-            @endif
+            --primary: {{ $primary }};
+            --primary-light: color-mix(in srgb, {{ $primary }} 85%, white);
+            --primary-glow: color-mix(in srgb, {{ $primary }} 25%, transparent);
+            --secondary: {{ $secondary }};
+            --secondary-light: color-mix(in srgb, {{ $secondary }} 85%, white);
+            --secondary-glow: color-mix(in srgb, {{ $secondary }} 25%, transparent);
+            --accent: {{ $accent }};
         }
 
         /* Nav Layout */
@@ -213,6 +238,9 @@
         </div>
     @endif
 
+    @if($themeHeaderView && view()->exists($themeHeaderView))
+        @include($themeHeaderView)
+    @else
     <!-- Navigation Header -->
     <nav class="public-nav">
         <a href="/" class="logo-link">
@@ -228,19 +256,20 @@
         </a>
 
         <ul class="public-menu" id="nav-menu">
-            <li><a href="/" class="{{ Request::is('/') ? 'active' : '' }}">Home</a></li>
-            <li><a href="/rooms" class="{{ Request::is('rooms') ? 'active' : '' }}">Rooms</a></li>
-            <li><a href="/about" class="{{ Request::is('about') ? 'active' : '' }}">About</a></li>
-            <li><a href="/contact" class="{{ Request::is('contact') ? 'active' : '' }}">Contact</a></li>
-            @if(Route::has('shop.index'))
-            <li><a href="{{ route('shop.index') }}" class="{{ Request::is('shop') ? 'active' : '' }}">Tuck Shop</a></li>
+            @include('themes.partials.main-menu-links')
+            @php
+                $tuckShopEnabled = \App\Models\Setting::getValue('ecommerce_tuck_shop_enabled', '1') === '1';
+                $restaurantEnabled = \App\Models\Setting::getValue('ecommerce_restaurant_enabled', '1') === '1';
+            @endphp
+            @if($tuckShopEnabled && Route::has('shop.index'))
+                <li><a href="{{ route('shop.index') }}" class="{{ Request::is('shop') ? 'active' : '' }}">{{ \App\Models\Setting::getValue('ecommerce_tuck_shop_name', 'Tuck Shop') }}</a></li>
             @endif
-            @if(Route::has('restaurant.index'))
-            <li><a href="{{ route('restaurant.index') }}" class="{{ Request::is('restaurant') ? 'active' : '' }}">Restaurant</a></li>
+            @if($restaurantEnabled && Route::has('restaurant.index'))
+                <li><a href="{{ route('restaurant.index') }}" class="{{ Request::is('restaurant') ? 'active' : '' }}">{{ \App\Models\Setting::getValue('ecommerce_restaurant_name', 'Restaurant') }}</a></li>
             @endif
-            @foreach($navPages->where('show_in_nav', true) as $p)
-                <li><a href="/pages/{{ $p->slug }}" class="{{ Request::is('pages/' . $p->slug) ? 'active' : '' }}">{{ $p->title }}</a></li>
-            @endforeach
+            @if(view()->exists('multi_hotel.public-selector'))
+                <li>@include('multi_hotel.public-selector')</li>
+            @endif
         </ul>
 
         <div style="display: flex; align-items: center; gap: 1.25rem;">
@@ -269,12 +298,16 @@
             </button>
         </div>
     </nav>
+    @endif
 
     <!-- Main Content Area -->
     <main>
         @yield('content')
     </main>
 
+    @if($themeFooterView && view()->exists($themeFooterView))
+        @include($themeFooterView)
+    @else
     <!-- Global Footer -->
     <footer class="public-footer">
         <div class="footer-grid">
@@ -319,7 +352,7 @@
                     <i class="fa-solid fa-envelope" style="color: var(--primary); margin-right: 0.5rem;"></i> {{ \App\Models\Setting::getValue('contact_email', 'info@aetheriagrand.com') }}
                 </p>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
-                    <i class="fa-solid fa-location-dot" style="color: var(--primary); margin-right: 0.5rem;"></i> Golden Coast Beach, Suite A
+                    <i class="fa-solid fa-location-dot" style="color: var(--primary); margin-right: 0.5rem;"></i> {{ \App\Models\Setting::getValue('physical_address', 'Golden Coast Beach, Suite A') }}
                 </p>
             </div>
         </div>
@@ -329,21 +362,62 @@
             </p>
         </div>
     </footer>
+    @endif
+
+    @php
+        $promoEnabled = \App\Models\Setting::getValue('promo_popup_enabled', '0') === '1';
+        $promoTitle = \App\Models\Setting::getValue('promo_popup_title', 'Special Offer!');
+        $promoContent = \App\Models\Setting::getValue('promo_popup_content', 'Get an exclusive discount today.');
+        $promoImage = \App\Models\Setting::getValue('promo_popup_image', '');
+        $promoCoupon = \App\Models\Setting::getValue('promo_popup_coupon', '');
+    @endphp
+    @if($promoEnabled)
+        <div class="promo-popup-backdrop" id="promoPopup" aria-hidden="true">
+            <div class="promo-popup-panel" role="dialog" aria-modal="true" aria-labelledby="promoPopupTitle">
+                <button type="button" class="promo-popup-close" onclick="closePromoPopup()" aria-label="Close promo"><i class="fa-solid fa-xmark"></i></button>
+                @if($promoImage)
+                    <img src="{{ $promoImage }}" alt="" class="promo-popup-image">
+                @endif
+                <div class="promo-popup-body">
+                    <span class="promo-popup-kicker">Limited offer</span>
+                    <h2 id="promoPopupTitle">{{ $promoTitle }}</h2>
+                    <p>{{ $promoContent }}</p>
+                    @if($promoCoupon)
+                        <div class="promo-popup-coupon">{{ $promoCoupon }}</div>
+                    @endif
+                    <a href="{{ route('rooms') }}" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:0.5rem;text-decoration:none;">
+                        <i class="fa-solid fa-calendar-check"></i> Book a Room
+                    </a>
+                </div>
+            </div>
+        </div>
+        <style>
+            .promo-popup-backdrop { position: fixed; inset: 0; z-index: 3000; display: none; align-items: center; justify-content: center; padding: 1rem; background: rgba(2, 6, 23, 0.72); backdrop-filter: blur(8px); }
+            .promo-popup-backdrop.active { display: flex; }
+            .promo-popup-panel { position: relative; width: min(92vw, 760px); display: grid; grid-template-columns: 0.9fr 1.1fr; overflow: hidden; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow-xl, 0 24px 70px rgba(0,0,0,0.35)); }
+            .promo-popup-image { width: 100%; height: 100%; min-height: 360px; object-fit: cover; }
+            .promo-popup-body { padding: 2rem; display: flex; flex-direction: column; justify-content: center; gap: 1rem; }
+            .promo-popup-kicker { color: var(--primary); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0; }
+            .promo-popup-body h2 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.4rem); line-height: 1.05; color: var(--text-primary); }
+            .promo-popup-body p { margin: 0; color: var(--text-secondary); line-height: 1.65; }
+            .promo-popup-coupon { width: fit-content; border: 1px dashed var(--primary); color: var(--primary); background: var(--primary-glow); padding: 0.6rem 0.9rem; border-radius: 6px; font-weight: 800; letter-spacing: 0; }
+            .promo-popup-close { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--surface); color: var(--text-primary); cursor: pointer; }
+            @media (max-width: 720px) { .promo-popup-panel { grid-template-columns: 1fr; } .promo-popup-image { min-height: 210px; } .promo-popup-body { padding: 1.5rem; } }
+        </style>
+    @endif
 
     <script>
         // Light/Dark Theme Switching
         const html = document.documentElement;
         const themeIcon = document.getElementById('theme-icon');
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         setTheme(savedTheme);
 
         function setTheme(theme) {
             html.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
-            if (theme === 'dark') {
-                themeIcon.className = 'fa-solid fa-sun';
-            } else {
-                themeIcon.className = 'fa-solid fa-moon';
+            if (themeIcon) {
+                themeIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
             }
         }
 
@@ -356,6 +430,22 @@
         function toggleMobileMenu() {
             const navMenu = document.getElementById('nav-menu');
             navMenu.classList.toggle('active');
+        }
+
+        const promoPopup = document.getElementById('promoPopup');
+        const promoKey = 'promo-popup-{{ md5($promoTitle . '|' . $promoCoupon) }}';
+        if (promoPopup && !sessionStorage.getItem(promoKey)) {
+            window.setTimeout(() => {
+                promoPopup.classList.add('active');
+                promoPopup.setAttribute('aria-hidden', 'false');
+                sessionStorage.setItem(promoKey, 'shown');
+            }, 900);
+        }
+
+        function closePromoPopup() {
+            if (!promoPopup) return;
+            promoPopup.classList.remove('active');
+            promoPopup.setAttribute('aria-hidden', 'true');
         }
     </script>
     @yield('scripts')

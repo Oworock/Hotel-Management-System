@@ -249,6 +249,16 @@
                 </div>
             </div>
 
+            <div style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; background: var(--primary-glow); margin-top: 1rem;">
+                <label style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer;">
+                    <input type="checkbox" id="demo-content" checked style="margin-top: 0.25rem; width: 1.05rem; height: 1.05rem; accent-color: var(--primary);">
+                    <span>
+                        <strong style="display: block; color: var(--text-primary); margin-bottom: 0.25rem;">Install production-ready demo content</strong>
+                        <span style="display: block; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;">Adds sample rooms, FAQs, testimonials, gallery images, blog posts, staff users, and demo shop/restaurant items. Disable this for a clean live installation.</span>
+                    </span>
+                </label>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
                 <button class="btn btn-outline" onclick="goToStep(2)"><i class="fa-solid fa-arrow-left"></i> Back</button>
                 <button class="btn btn-primary" onclick="validateStep3()">
@@ -433,6 +443,7 @@
                 admin_name: document.getElementById('admin-name').value,
                 admin_email: document.getElementById('admin-email').value,
                 admin_password: document.getElementById('admin-password').value,
+                demo_content: document.getElementById('demo-content').checked ? 1 : 0,
             };
 
             try {

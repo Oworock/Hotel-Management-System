@@ -144,26 +144,24 @@
                 </div>
                 <div>
                     <h3 class="info-title">Resort Location</h3>
-                    <p class="info-desc">Golden Coast Beach Boulevard, Suite A, Victoria</p>
+                    <p class="info-desc">{{ \App\Models\Setting::getValue('physical_address', 'Golden Coast Beach Boulevard, Suite A, Victoria') }}</p>
                 </div>
             </div>
             
             <div class="map-wrapper" style="height: 250px;">
                 @php
                     $mapAddress = \App\Models\Setting::getValue('map_address');
+                    preg_match('/src=["\']([^"\']+)["\']/', (string) $mapAddress, $mapMatch);
+                    $mapSrc = $mapMatch[1] ?? $mapAddress;
                 @endphp
-                @if($mapAddress && (str_contains($mapAddress, 'http') || str_contains($mapAddress, '<iframe')))
-                    @if(str_contains($mapAddress, '<iframe'))
-                        {!! $mapAddress !!}
-                    @else
-                        <iframe src="{{ $mapAddress }}" allowfullscreen="" loading="lazy"></iframe>
-                    @endif
+                @if($mapSrc && (str_starts_with($mapSrc, 'http://') || str_starts_with($mapSrc, 'https://')))
+                    <iframe src="{{ $mapSrc }}" allowfullscreen="" loading="lazy"></iframe>
                 @else
                     <div style="width:100%; height:100%; background: linear-gradient(135deg, var(--background) 0%, var(--border-color) 100%); display: flex; flex-direction:column; align-items: center; justify-content: center; color: var(--text-secondary); text-align: center; padding: 1.5rem;">
                         <i class="fa-solid fa-map-location-dot" style="font-size: 2.5rem; margin-bottom: 0.75rem; color: var(--primary);"></i>
-                        <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem;">Map Configured</h4>
+                        <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem;">Map Not Configured</h4>
                         <p style="font-size: 0.75rem;">
-                            {{ $mapAddress ?: 'Golden Coast Beach Boulevard, Suite A, Victoria' }}
+                            {{ \App\Models\Setting::getValue('physical_address', 'Golden Coast Beach Boulevard, Suite A, Victoria') }}
                         </p>
                     </div>
                 @endif

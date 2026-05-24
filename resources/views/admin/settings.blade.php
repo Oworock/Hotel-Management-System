@@ -91,8 +91,13 @@
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label class="form-label">Map Address (Embed URL / Text)</label>
-                <textarea name="map_address" class="form-control" rows="3" placeholder="Enter Google Maps Embed URL or address text">{{ $settings['map_address'] }}</textarea>
+                <label class="form-label">Physical Address</label>
+                <textarea name="physical_address" class="form-control" rows="3" placeholder="Street address guests can follow or copy">{{ $settings['physical_address'] }}</textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label">Google Maps Embed URL / Iframe Code</label>
+                <textarea name="map_address" class="form-control" rows="3" placeholder="Paste a Google Maps embed URL or full iframe code">{{ $settings['map_address'] }}</textarea>
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin: 2rem 0; padding-top: 1.5rem;">
@@ -143,6 +148,19 @@
                             <img src="{{ $settings['logo_image'] }}" alt="Current logo" style="max-height: 30px; background: rgba(0,0,0,0.05); border-radius: 4px;">
                         </div>
                     @endif
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label">Login & Register Background Image</label>
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem; align-items: center;">
+                    <div style="height: 110px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); background: var(--background);">
+                        <img src="{{ $settings['auth_background_image'] }}" alt="Auth Background" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div>
+                        <input type="file" name="auth_background_image" class="form-control" accept="image/*">
+                        <p class="form-hint">Used behind login, register, and password reset pages.</p>
+                    </div>
                 </div>
             </div>
 
@@ -204,10 +222,11 @@
             <div class="form-group" style="margin-bottom: 1.5rem; max-width: 400px;">
                 <label class="form-label">Active Customer Checkout Gateway</label>
                 <select name="active_payment_gateway" class="form-control form-select">
-                    <option value="card_simulation" {{ $settings['active_payment_gateway'] === 'card_simulation' ? 'selected' : '' }}>Mock Credit Card Simulation</option>
+                    <option value="disabled" {{ $settings['active_payment_gateway'] === 'disabled' ? 'selected' : '' }}>Disabled until gateway keys are configured</option>
                     <option value="paystack" {{ $settings['active_payment_gateway'] === 'paystack' ? 'selected' : '' }}>Paystack API Checkout</option>
                     <option value="flutterwave" {{ $settings['active_payment_gateway'] === 'flutterwave' ? 'selected' : '' }}>Flutterwave API Checkout</option>
                 </select>
+                <p style="margin-top:.6rem;color:var(--text-secondary);font-size:.85rem;">Customer bookings are only marked paid after Paystack or Flutterwave verifies the transaction reference on the server.</p>
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin: 2rem 0; padding-top: 1.5rem;">
@@ -295,6 +314,13 @@
 
             <!-- Custom SMS credentials -->
             <div class="sms-group-custom" style="display: {{ $settings['sms_gateway_provider'] === 'custom' ? 'block' : 'none' }}; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                @php
+                    $customSmsHeaders = json_decode($settings['custom_sms_headers'] ?: '{}', true) ?: [];
+                    $customSmsPayload = json_decode($settings['custom_sms_payload'] ?: '{}', true) ?: [];
+                    if (empty($customSmsPayload)) {
+                        $customSmsPayload = ['to' => '{to}', 'message' => '{message}'];
+                    }
+                @endphp
                 <h4 style="font-size: 1.1rem; margin-bottom: 1rem;"><i class="fa-solid fa-code"></i> Custom API Parameters</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
                     <div class="form-group">
@@ -309,14 +335,38 @@
                         </select>
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
                     <div class="form-group">
-                        <label class="form-label">Request Headers (JSON format)</label>
-                        <textarea name="custom_sms_headers" class="form-control" rows="3" style="font-family: monospace;" placeholder='{"Authorization": "Bearer key"}' id="custom_sms_headers">{{ $settings['custom_sms_headers'] }}</textarea>
+                        <label class="form-label">Request Headers</label>
+                        <div id="admin-sms-header-rows" style="display:grid;gap:0.75rem;">
+                            @forelse($customSmsHeaders as $key => $value)
+                                <div class="sms-pair-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;">
+                                    <input type="text" name="custom_sms_header_keys[]" class="form-control" value="{{ $key }}" placeholder="Header key">
+                                    <input type="text" name="custom_sms_header_values[]" class="form-control" value="{{ $value }}" placeholder="Header value">
+                                    <button type="button" class="btn btn-outline" onclick="this.closest('.sms-pair-row').remove()"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            @empty
+                                <div class="sms-pair-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;">
+                                    <input type="text" name="custom_sms_header_keys[]" class="form-control" placeholder="Authorization">
+                                    <input type="text" name="custom_sms_header_values[]" class="form-control" placeholder="Bearer token">
+                                    <button type="button" class="btn btn-outline" onclick="this.closest('.sms-pair-row').remove()"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            @endforelse
+                        </div>
+                        <button type="button" class="btn btn-outline" style="margin-top:0.75rem;" onclick="addSmsPairRow('admin-sms-header-rows', 'custom_sms_header_keys[]', 'custom_sms_header_values[]')"><i class="fa-solid fa-plus"></i> Add Header</button>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Payload Template (JSON format - use @{to} and @{message} variables)</label>
-                        <textarea name="custom_sms_payload" class="form-control" rows="3" style="font-family: monospace;" placeholder='{"to": "@{to}", "body": "@{message}"}' id="custom_sms_payload">{{ $settings['custom_sms_payload'] }}</textarea>
+                        <label class="form-label">Body / Query Parameters</label>
+                        <div id="admin-sms-payload-rows" style="display:grid;gap:0.75rem;">
+                            @foreach($customSmsPayload as $key => $value)
+                                <div class="sms-pair-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;">
+                                    <input type="text" name="custom_sms_payload_keys[]" class="form-control" value="{{ $key }}" placeholder="Parameter key">
+                                    <input type="text" name="custom_sms_payload_values[]" class="form-control" value="{{ $value }}" placeholder="{to} or {message}">
+                                    <button type="button" class="btn btn-outline" onclick="this.closest('.sms-pair-row').remove()"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            @endforeach
+                        </div>
+                        <button type="button" class="btn btn-outline" style="margin-top:0.75rem;" onclick="addSmsPairRow('admin-sms-payload-rows', 'custom_sms_payload_keys[]', 'custom_sms_payload_values[]')"><i class="fa-solid fa-plus"></i> Add Parameter</button>
                     </div>
                 </div>
             </div>
@@ -337,12 +387,12 @@
                 <textarea name="welcome_description" class="form-control" rows="4">{{ $settings['welcome_description'] ?? '' }}</textarea>
             </div>
 
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label class="form-label">Guest Testimonials (JSON Format)</label>
-                <textarea name="testimonials_list" class="form-control" rows="6" style="font-family: monospace; font-size: 0.9rem;">{{ $settings['testimonials_list'] ?? '[]' }}</textarea>
-                <small style="color: var(--text-secondary); font-size: 0.75rem; display: block; margin-top: 0.25rem;">
-                    Must be a valid JSON array of objects, e.g. <code>[{"name": "John Doe", "location": "London", "rating": 5, "comment": "Amazing stay!", "avatar_url": ""}]</code>.
-                </small>
+            <div class="glass-panel" style="padding: 1rem; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 0.5rem; color: var(--text-primary);">Guest Testimonials</h4>
+                <p style="color: var(--text-secondary); margin: 0 0 1rem;">Testimonials are managed with the dashboard form instead of raw JSON.</p>
+                <a href="{{ route('admin.testimonials') }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                    <i class="fa-solid fa-comments"></i> Manage Testimonials
+                </a>
             </div>
         </div>
 
@@ -356,12 +406,23 @@
 
     <!-- Tab: Hero Slider (outside main form because of nested forms) -->
     <div id="setting-content-slider" class="setting-tab-content" style="display: none; margin-top: 1.5rem;">
-        <div style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 2rem; align-items: start;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+            <div>
+                <h3 style="font-size:1.15rem;font-weight:700;margin:0;"><i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Current Hero Slides</h3>
+                <p style="color:var(--text-secondary);margin:.35rem 0 0;">Manage homepage slide content and visual order.</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="openCreateSlideModal()"><i class="fa-solid fa-plus"></i> Create Hero Slide</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2rem; align-items: stretch;">
             <!-- Create Slide Form -->
-            <div class="glass-panel" style="padding: 1.5rem; border-color: var(--border-color); height: fit-content;">
-                <h3 style="font-size: 1.15rem; margin-bottom: 1.5rem; font-weight: 700;">
-                    <i class="fa-solid fa-plus" style="color: var(--primary);"></i> Add New Hero Slide
-                </h3>
+            <div class="modal" id="createSlideModal">
+                <div class="modal-content glass-panel modal-lg">
+                    <div class="modal-header">
+                        <h3 style="font-size: 1.15rem; font-weight: 700;">
+                            <i class="fa-solid fa-plus" style="color: var(--primary);"></i> Add New Hero Slide
+                        </h3>
+                        <button type="button" class="theme-toggle" onclick="closeCreateSlideModal()"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 <form action="{{ route('admin.slider.store') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1.25rem;">
                     @csrf
                     <div class="form-group">
@@ -407,14 +468,11 @@
                         <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Create Slide
                     </button>
                 </form>
+                </div>
             </div>
 
             <!-- Existing Slides List -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem;">
-                    <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> Current Hero Slides
-                </h3>
-
                 @forelse($slides as $slide)
                     <div class="glass-panel" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; position: relative;">
                         <!-- Slide Header Preview -->
@@ -558,6 +616,38 @@
         if (vonage) vonage.style.display = provider === 'vonage' ? 'block' : 'none';
         if (custom) custom.style.display = provider === 'custom' ? 'block' : 'none';
     }
+
+    function addSmsPairRow(containerId, keyName, valueName) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const row = document.createElement('div');
+        row.className = 'sms-pair-row';
+        row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;';
+        row.innerHTML = `
+            <input type="text" name="${keyName}" class="form-control" placeholder="Key">
+            <input type="text" name="${valueName}" class="form-control" placeholder="Value">
+            <button type="button" class="btn btn-outline" onclick="this.closest('.sms-pair-row').remove()"><i class="fa-solid fa-xmark"></i></button>
+        `;
+        container.appendChild(row);
+    }
+
+    function openCreateSlideModal() {
+        document.getElementById('createSlideModal').classList.add('active');
+    }
+
+    function closeCreateSlideModal() {
+        document.getElementById('createSlideModal').classList.remove('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const slideModal = document.getElementById('createSlideModal');
+        window.addEventListener('click', function(event) {
+            if (event.target === slideModal) {
+                closeCreateSlideModal();
+            }
+        });
+    });
 </script>
 
 <style>

@@ -84,6 +84,10 @@
                                 $canCheckOut = ($booking->status === 'checked_in');
                             @endphp
 
+                            <a href="{{ route('customer.bookings.document', $booking) }}" target="_blank" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; margin-right: 0.35rem;">
+                                <i class="fa-solid fa-file-invoice"></i> {{ $booking->payment_status === 'paid' ? 'Receipt' : 'Invoice' }}
+                            </a>
+
                             @if($canCheckIn)
                                 <form action="{{ route('customer.bookings.check_in', $booking->id) }}" method="POST" style="display: inline-block;">
                                     @csrf

@@ -7,6 +7,8 @@ use App\Models\Testimonial;
 use App\Models\Gallery;
 use App\Models\BlogPost;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class ContentManagementController extends Controller
 {
@@ -23,7 +25,10 @@ class ContentManagementController extends Controller
             'question' => 'required|string|max:255',
             'answer' => 'required|string',
             'order' => 'integer|min:0',
+            'is_active' => 'boolean',
         ]);
+
+        $validated['is_active'] = $request->boolean('is_active');
 
         FAQ::create($validated);
         return redirect()->route('admin.faqs')->with('success', 'FAQ added successfully');
@@ -37,6 +42,8 @@ class ContentManagementController extends Controller
             'order' => 'integer|min:0',
             'is_active' => 'boolean',
         ]);
+
+        $validated['is_active'] = $request->boolean('is_active');
 
         $faq->update($validated);
         return back()->with('success', 'FAQ updated successfully');
@@ -64,7 +71,11 @@ class ContentManagementController extends Controller
             'rating' => 'required|integer|min:1|max:5',
             'image' => 'nullable|image|max:2048',
             'is_featured' => 'boolean',
+            'is_active' => 'boolean',
         ]);
+
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_active'] = $request->boolean('is_active');
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('testimonials', 'public');
@@ -85,6 +96,9 @@ class ContentManagementController extends Controller
             'is_featured' => 'boolean',
             'is_active' => 'boolean',
         ]);
+
+        $validated['is_featured'] = $request->boolean('is_featured');
+        $validated['is_active'] = $request->boolean('is_active');
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('testimonials', 'public');
@@ -117,8 +131,10 @@ class ContentManagementController extends Controller
             'description' => 'nullable|string',
             'image' => 'required|image|max:5120',
             'order' => 'integer|min:0',
+            'is_active' => 'boolean',
         ]);
 
+        $validated['is_active'] = $request->boolean('is_active');
         $validated['image'] = $request->file('image')->store('gallery', 'public');
         Gallery::create($validated);
         return back()->with('success', 'Photo added successfully');
@@ -133,6 +149,8 @@ class ContentManagementController extends Controller
             'order' => 'integer|min:0',
             'is_active' => 'boolean',
         ]);
+
+        $validated['is_active'] = $request->boolean('is_active');
 
         if ($request->hasFile('image')) {
             \Storage::disk('public')->delete($photo->image);
@@ -154,19 +172,40 @@ class ContentManagementController extends Controller
     public function blog()
     {
         $posts = BlogPost::with('author')->latest()->get();
-        return view('admin.content.blog', compact('posts'));
+        $seoColumnsReady = Schema::hasColumn('blog_posts', 'meta_title');
+
+        return view('admin.content.blog', compact('posts', 'seoColumnsReady'));
     }
 
     public function storeBlog(Request $request)
     {
+        $request->merge([
+            'slug' => $this->seoSlug($request->input('slug') ?: $request->input('title')),
+        ]);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => 'required|string|unique:blog_posts|max:255',
             'content' => 'required|string',
             'excerpt' => 'nullable|string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:320',
+            'meta_keywords' => 'nullable|string|max:500',
+            'focus_keyword' => 'nullable|string|max:120',
+            'canonical_url' => 'nullable|url|max:500',
             'featured_image' => 'nullable|image|max:5120',
             'is_published' => 'boolean',
         ]);
+
+        if (!Schema::hasColumn('blog_posts', 'meta_title')) {
+            unset(
+                $validated['meta_title'],
+                $validated['meta_description'],
+                $validated['meta_keywords'],
+                $validated['focus_keyword'],
+                $validated['canonical_url']
+            );
+        }
 
         if ($request->hasFile('featured_image')) {
             $validated['featured_image'] = $request->file('featured_image')->store('blog', 'public');
@@ -183,14 +222,33 @@ class ContentManagementController extends Controller
 
     public function updateBlog(Request $request, BlogPost $post)
     {
+        $request->merge([
+            'slug' => $this->seoSlug($request->input('slug') ?: $request->input('title')),
+        ]);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'slug' => "required|string|unique:blog_posts,slug,{$post->id}|max:255",
             'content' => 'required|string',
             'excerpt' => 'nullable|string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:320',
+            'meta_keywords' => 'nullable|string|max:500',
+            'focus_keyword' => 'nullable|string|max:120',
+            'canonical_url' => 'nullable|url|max:500',
             'featured_image' => 'nullable|image|max:5120',
             'is_published' => 'boolean',
         ]);
+
+        if (!Schema::hasColumn('blog_posts', 'meta_title')) {
+            unset(
+                $validated['meta_title'],
+                $validated['meta_description'],
+                $validated['meta_keywords'],
+                $validated['focus_keyword'],
+                $validated['canonical_url']
+            );
+        }
 
         if ($request->hasFile('featured_image')) {
             \Storage::disk('public')->delete($post->featured_image);
@@ -212,5 +270,19 @@ class ContentManagementController extends Controller
         }
         $post->delete();
         return back()->with('success', 'Blog post deleted successfully');
+    }
+
+    protected function seoSlug(?string $value): string
+    {
+        $stopWords = [
+            'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by', 'for',
+            'from', 'has', 'in', 'into', 'is', 'it', 'of', 'on', 'or', 'our',
+            'that', 'the', 'their', 'this', 'to', 'with', 'your', 'you',
+        ];
+
+        $words = preg_split('/\s+/', Str::lower((string) $value), -1, PREG_SPLIT_NO_EMPTY);
+        $filtered = array_values(array_filter($words, fn ($word) => !in_array(trim($word, " \t\n\r\0\x0B-_,.!?"), $stopWords, true)));
+
+        return Str::slug(implode(' ', $filtered) ?: $value);
     }
 }

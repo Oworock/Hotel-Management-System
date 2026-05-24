@@ -1,37 +1,64 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Aetheria HMS') - Hotel Management System</title>
+    <meta name="color-scheme" content="dark light">
+    <script>
+        (function() {
+            const storedTheme = localStorage.getItem('theme');
+            const initialTheme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
+            document.documentElement.setAttribute('data-theme', initialTheme);
+        })();
+    </script>
     <link rel="stylesheet" href="/css/style.css">
+    @php
+        $viteManifestPath = public_path('build/manifest.json');
+        $viteManifest = file_exists($viteManifestPath) ? json_decode(file_get_contents($viteManifestPath), true) : [];
+        $viteCss = $viteManifest['resources/css/app.css']['file'] ?? null;
+        $viteJs = $viteManifest['resources/js/app.js']['file'] ?? null;
+    @endphp
+    @if($viteCss)
+        <link rel="stylesheet" href="/build/{{ $viteCss }}">
+    @endif
+    @if($viteJs)
+        <script type="module" src="/build/{{ $viteJs }}"></script>
+    @endif
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        @php
+            $activeTheme = \App\Helpers\ThemeHelper::getActiveTheme();
+            $themeColors = $activeTheme?->colors ?? [];
+            $primary = $themeColors['primary'] ?? \App\Models\Setting::getValue('primary_color', '#6e44ff');
+            $secondary = $themeColors['secondary'] ?? \App\Models\Setting::getValue('secondary_color', '#f44496');
+            $accent = $themeColors['accent'] ?? '#10B981';
+            $background = $themeColors['background'] ?? null;
+            $text = $themeColors['text'] ?? null;
+        @endphp
         :root {
-            @if($primary = \App\Models\Setting::getValue('primary_color'))
-                --primary: {{ $primary }};
-                --primary-light: color-mix(in srgb, {{ $primary }} 75%, white);
-                --primary-glow: color-mix(in srgb, {{ $primary }} 15%, transparent);
+            --primary: {{ $primary }};
+            --primary-light: color-mix(in srgb, {{ $primary }} 75%, white);
+            --primary-glow: color-mix(in srgb, {{ $primary }} 15%, transparent);
+            --secondary: {{ $secondary }};
+            --secondary-light: color-mix(in srgb, {{ $secondary }} 75%, white);
+            --secondary-glow: color-mix(in srgb, {{ $secondary }} 15%, transparent);
+            --accent: {{ $accent }};
+            @if($background)
+                --theme-background: {{ $background }};
             @endif
-            
-            @if($secondary = \App\Models\Setting::getValue('secondary_color'))
-                --secondary: {{ $secondary }};
-                --secondary-light: color-mix(in srgb, {{ $secondary }} 75%, white);
-                --secondary-glow: color-mix(in srgb, {{ $secondary }} 15%, transparent);
+            @if($text)
+                --theme-text: {{ $text }};
             @endif
         }
         [data-theme="dark"] {
-            @if($primary = \App\Models\Setting::getValue('primary_color'))
-                --primary: {{ $primary }};
-                --primary-light: color-mix(in srgb, {{ $primary }} 85%, white);
-                --primary-glow: color-mix(in srgb, {{ $primary }} 25%, transparent);
-            @endif
-            
-            @if($secondary = \App\Models\Setting::getValue('secondary_color'))
-                --secondary: {{ $secondary }};
-                --secondary-light: color-mix(in srgb, {{ $secondary }} 85%, white);
-                --secondary-glow: color-mix(in srgb, {{ $secondary }} 25%, transparent);
-            @endif
+            --primary: {{ $primary }};
+            --primary-light: color-mix(in srgb, {{ $primary }} 85%, white);
+            --primary-glow: color-mix(in srgb, {{ $primary }} 25%, transparent);
+            --secondary: {{ $secondary }};
+            --secondary-light: color-mix(in srgb, {{ $secondary }} 85%, white);
+            --secondary-glow: color-mix(in srgb, {{ $secondary }} 25%, transparent);
+            --accent: {{ $accent }};
         }
     </style>
 </head>
@@ -96,6 +123,30 @@
                             <i class="fa-solid fa-puzzle-piece"></i> Plugins
                         </a>
                     </li>
+                    <li class="sidebar-menu-item {{ Route::is('super_admin.themes') ? 'active' : '' }}">
+                        <a href="{{ route('super_admin.themes') }}">
+                            <i class="fa-solid fa-palette"></i> Themes
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-header">Website Content</li>
+                    <li class="sidebar-menu-item {{ Route::is('admin.faqs') ? 'active' : '' }}">
+                        <a href="{{ route('admin.faqs') }}"><i class="fa-solid fa-circle-question"></i> FAQs</a>
+                    </li>
+                    <li class="sidebar-menu-item {{ Route::is('admin.gallery') ? 'active' : '' }}">
+                        <a href="{{ route('admin.gallery') }}"><i class="fa-solid fa-images"></i> Gallery</a>
+                    </li>
+                    <li class="sidebar-menu-item {{ Route::is('admin.testimonials') ? 'active' : '' }}">
+                        <a href="{{ route('admin.testimonials') }}"><i class="fa-solid fa-comments"></i> Testimonials</a>
+                    </li>
+                    <li class="sidebar-menu-item {{ Route::is('admin.blog') ? 'active' : '' }}">
+                        <a href="{{ route('admin.blog') }}"><i class="fa-solid fa-newspaper"></i> Blog</a>
+                    </li>
+                    <li class="sidebar-menu-item {{ Route::is('super_admin.frontend_content') ? 'active' : '' }}">
+                        <a href="{{ route('super_admin.frontend_content') }}"><i class="fa-solid fa-pen-nib"></i> Frontend Editor</a>
+                    </li>
+                    <li class="sidebar-menu-item {{ Route::is('super_admin.languages') || Route::is('super_admin.currencies') || Route::is('super_admin.amenities') || Route::is('super_admin.offers') ? 'active' : '' }}">
+                        <a href="{{ route('super_admin.languages') }}"><i class="fa-solid fa-globe"></i> Localization</a>
+                    </li>
                     <li class="sidebar-menu-item {{ Route::is('super_admin.developer') ? 'active' : '' }}">
                         <a href="{{ route('super_admin.developer') }}">
                             <i class="fa-solid fa-code"></i> Developer Portal
@@ -109,7 +160,7 @@
                         </li>
                     @endif
                     @if(Route::has('admin.ecommerce.dashboard'))
-                        <li class="sidebar-menu-header" style="padding: 0.75rem 1rem 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.6; font-weight: 700;">E-commerce</li>
+                        <li class="sidebar-menu-header">E-commerce</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.ecommerce.dashboard') ? 'active' : '' }}">
                             <a href="{{ route('admin.ecommerce.dashboard') }}">
                                 <i class="fa-solid fa-gauge-high"></i> Shop Dashboard
@@ -137,7 +188,7 @@
                         </li>
                     @endif
                     @if(Route::has('admin.channel_manager.index'))
-                        <li class="sidebar-menu-header" style="padding: 0.75rem 1rem 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.6; font-weight: 700;">Channel Manager</li>
+                        <li class="sidebar-menu-header">Channel Manager</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.channel_manager.index') ? 'active' : '' }}">
                             <a href="{{ route('admin.channel_manager.index') }}">
                                 <i class="fa-solid fa-cloud-arrow-up"></i> OTA Sync
@@ -191,8 +242,21 @@
                             <i class="fa-solid fa-gears"></i> Settings
                         </a>
                     </li>
+                    <li class="sidebar-menu-header">Website Content</li>
+                    <li class="sidebar-menu-item {{ Route::is('admin.faqs') ? 'active' : '' }}">
+                        <a href="{{ route('admin.faqs') }}"><i class="fa-solid fa-circle-question"></i> FAQs</a>
+                    </li>
+                    <li class="sidebar-menu-item {{ Route::is('admin.gallery') ? 'active' : '' }}">
+                        <a href="{{ route('admin.gallery') }}"><i class="fa-solid fa-images"></i> Gallery</a>
+                    </li>
+                    <li class="sidebar-menu-item {{ Route::is('admin.testimonials') ? 'active' : '' }}">
+                        <a href="{{ route('admin.testimonials') }}"><i class="fa-solid fa-comments"></i> Testimonials</a>
+                    </li>
+                    <li class="sidebar-menu-item {{ Route::is('admin.blog') ? 'active' : '' }}">
+                        <a href="{{ route('admin.blog') }}"><i class="fa-solid fa-newspaper"></i> Blog</a>
+                    </li>
                     @if(Route::has('admin.ecommerce.dashboard'))
-                        <li class="sidebar-menu-header" style="padding: 0.75rem 1rem 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.6; font-weight: 700;">E-commerce</li>
+                        <li class="sidebar-menu-header">E-commerce</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.ecommerce.dashboard') ? 'active' : '' }}">
                             <a href="{{ route('admin.ecommerce.dashboard') }}">
                                 <i class="fa-solid fa-gauge-high"></i> Shop Dashboard
@@ -220,7 +284,7 @@
                         </li>
                     @endif
                     @if(Route::has('admin.channel_manager.index'))
-                        <li class="sidebar-menu-header" style="padding: 0.75rem 1rem 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.6; font-weight: 700;">Channel Manager</li>
+                        <li class="sidebar-menu-header">Channel Manager</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.channel_manager.index') ? 'active' : '' }}">
                             <a href="{{ route('admin.channel_manager.index') }}">
                                 <i class="fa-solid fa-cloud-arrow-up"></i> OTA Sync
@@ -240,7 +304,7 @@
                         </a>
                     </li>
                     @if((auth()->user()->hasFunction('manage_tuck_shop') || auth()->user()->hasFunction('manage_restaurant')) && Route::has('admin.ecommerce.dashboard'))
-                        <li class="sidebar-menu-header" style="padding: 0.75rem 1rem 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.6; font-weight: 700;">E-commerce</li>
+                        <li class="sidebar-menu-header">E-commerce</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.ecommerce.dashboard') ? 'active' : '' }}">
                             <a href="{{ route('admin.ecommerce.dashboard') }}">
                                 <i class="fa-solid fa-gauge-high"></i> Shop Dashboard
@@ -295,7 +359,7 @@
                         </a>
                     </li>
                     @if((auth()->user()->hasFunction('manage_tuck_shop') || auth()->user()->hasFunction('manage_restaurant')) && Route::has('admin.ecommerce.dashboard'))
-                        <li class="sidebar-menu-header" style="padding: 0.75rem 1rem 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.6; font-weight: 700;">E-commerce</li>
+                        <li class="sidebar-menu-header">E-commerce</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.ecommerce.dashboard') ? 'active' : '' }}">
                             <a href="{{ route('admin.ecommerce.dashboard') }}">
                                 <i class="fa-solid fa-gauge-high"></i> Shop Dashboard
@@ -335,7 +399,7 @@
                         </a>
                     </li>
                     @if((auth()->user()->hasFunction('manage_tuck_shop') || auth()->user()->hasFunction('manage_restaurant')) && Route::has('admin.ecommerce.dashboard'))
-                        <li class="sidebar-menu-header" style="padding: 0.75rem 1rem 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.6; font-weight: 700;">E-commerce</li>
+                        <li class="sidebar-menu-header">E-commerce</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.ecommerce.dashboard') ? 'active' : '' }}">
                             <a href="{{ route('admin.ecommerce.dashboard') }}">
                                 <i class="fa-solid fa-gauge-high"></i> Shop Dashboard
@@ -429,7 +493,7 @@
                         </li>
                     @endif
                     @if((auth()->user()->hasFunction('manage_tuck_shop') || auth()->user()->hasFunction('manage_restaurant')) && Route::has('admin.ecommerce.dashboard'))
-                        <li class="sidebar-menu-header" style="padding: 0.75rem 1rem 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.6; font-weight: 700;">E-commerce</li>
+                        <li class="sidebar-menu-header">E-commerce</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.ecommerce.dashboard') ? 'active' : '' }}">
                             <a href="{{ route('admin.ecommerce.dashboard') }}">
                                 <i class="fa-solid fa-gauge-high"></i> Shop Dashboard
@@ -471,7 +535,7 @@
                         </li>
                     @endif
                     @if(auth()->user()->hasFunction('manage_channel_manager') && Route::has('admin.channel_manager.index'))
-                        <li class="sidebar-menu-header" style="padding: 0.75rem 1rem 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.6; font-weight: 700;">Channel Manager</li>
+                        <li class="sidebar-menu-header">Channel Manager</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.channel_manager.index') ? 'active' : '' }}">
                             <a href="{{ route('admin.channel_manager.index') }}">
                                 <i class="fa-solid fa-cloud-arrow-up"></i> OTA Sync
@@ -502,6 +566,9 @@
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <button class="theme-toggle" id="sidebar-toggle" onclick="toggleSidebar()" style="display: none;">
                         <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <button class="theme-toggle" id="sidebar-collapse-toggle" onclick="toggleSidebarCollapse()" aria-label="Collapse Sidebar">
+                        <i class="fa-solid fa-table-columns"></i>
                     </button>
                     <h1 class="topbar-title">@yield('title')</h1>
                 </div>
@@ -645,17 +712,15 @@
         // Theme Management
         const html = document.documentElement;
         const themeIcon = document.getElementById('theme-icon');
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         
         setTheme(savedTheme);
 
         function setTheme(theme) {
             html.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
-            if (theme === 'dark') {
-                themeIcon.className = 'fa-solid fa-sun';
-            } else {
-                themeIcon.className = 'fa-solid fa-moon';
+            if (themeIcon) {
+                themeIcon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
             }
         }
 
@@ -665,23 +730,40 @@
         }
 
         // Sidebar Responsive Toggle
+        const dashboardContainer = document.querySelector('.dashboard-container');
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarCollapseToggle = document.getElementById('sidebar-collapse-toggle');
         const sidebarClose = document.getElementById('sidebar-close');
+
+        if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 992) {
+            dashboardContainer.classList.add('sidebar-collapsed');
+        }
 
         function checkViewport() {
             if (window.innerWidth <= 992) {
                 sidebarToggle.style.display = 'flex';
                 sidebarClose.style.display = 'flex';
+                sidebarCollapseToggle.style.display = 'none';
+                dashboardContainer.classList.remove('sidebar-collapsed');
             } else {
                 sidebarToggle.style.display = 'none';
                 sidebarClose.style.display = 'none';
+                sidebarCollapseToggle.style.display = 'flex';
                 sidebar.classList.remove('active');
+                if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                    dashboardContainer.classList.add('sidebar-collapsed');
+                }
             }
         }
 
         function toggleSidebar() {
             sidebar.classList.toggle('active');
+        }
+
+        function toggleSidebarCollapse() {
+            dashboardContainer.classList.toggle('sidebar-collapsed');
+            localStorage.setItem('sidebarCollapsed', dashboardContainer.classList.contains('sidebar-collapsed'));
         }
 
         window.addEventListener('resize', checkViewport);

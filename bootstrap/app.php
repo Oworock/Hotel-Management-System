@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(\App\Http\Middleware\InstallationCheck::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\SetLocale::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'api.auth' => \App\Http\Middleware\ApiTokenAuthenticate::class,

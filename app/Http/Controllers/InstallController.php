@@ -115,6 +115,7 @@ class InstallController extends Controller
             'admin_name' => 'required|string|max:255',
             'admin_email' => 'required|email|max:255',
             'admin_password' => 'required|string|min:8',
+            'demo_content' => 'nullable|boolean',
         ]);
 
         try {
@@ -160,6 +161,7 @@ class InstallController extends Controller
             // Generate APP_KEY
             $appKey = 'base64:' . base64_encode(random_bytes(32));
             config(['app.key' => $appKey]);
+            config(['app.demo_content' => $request->boolean('demo_content')]);
 
             // Run migrations & seeds
             Artisan::call('migrate:fresh', ['--force' => true]);
@@ -183,6 +185,11 @@ class InstallController extends Controller
                 
                 // Replace variables
                 $content = preg_replace('/APP_KEY=/', 'APP_KEY=' . $appKey, $content);
+                if (str_contains($content, 'APP_DEMO_CONTENT=')) {
+                    $content = preg_replace('/APP_DEMO_CONTENT=[^\n]*/', 'APP_DEMO_CONTENT=' . ($request->boolean('demo_content') ? 'true' : 'false'), $content);
+                } else {
+                    $content .= "\nAPP_DEMO_CONTENT=" . ($request->boolean('demo_content') ? 'true' : 'false') . "\n";
+                }
                 $content = preg_replace('/DB_CONNECTION=[^\n]*/', 'DB_CONNECTION=' . $connection, $content);
                 
                 if ($connection === 'sqlite') {

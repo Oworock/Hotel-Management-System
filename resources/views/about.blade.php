@@ -227,7 +227,14 @@
                         'role' => 'Food & Wine Critic'
                     ]
                 ];
-                $testimonials = json_decode(\App\Models\Setting::getValue('testimonials_list', '[]'), true) ?: $defaultTestimonials;
+                $managedTestimonials = \App\Models\Testimonial::where('is_active', true)->orderByDesc('is_featured')->take(6)->get();
+                $testimonials = $managedTestimonials->isNotEmpty()
+                    ? $managedTestimonials->map(fn ($item) => [
+                        'quote' => $item->content,
+                        'name' => $item->guest_name,
+                        'role' => $item->guest_title,
+                    ])->all()
+                    : $defaultTestimonials;
             @endphp
             @foreach($testimonials as $t)
                 <div class="testimonial-card">

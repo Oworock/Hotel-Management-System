@@ -1,0 +1,1 @@
+<footer class="sunset-site-footer"><strong>{{ \App\Models\Setting::getValue('hotel_name','Aetheria') }}</strong><p>{!! \App\Models\Setting::getValue('global_footer', \App\Models\Setting::getValue('contact_email','info@aetheriagrand.com')) !!}</p><nav><a href="/rooms">Escapes</a><a href="/gallery">Moments</a><a href="/contact">Contact</a></nav></footer>

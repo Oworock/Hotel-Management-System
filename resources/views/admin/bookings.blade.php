@@ -88,6 +88,10 @@
                         </td>
                         <td>
                             <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                                <a href="{{ route('admin.bookings.document', $booking) }}" target="_blank" class="btn btn-sm btn-outline" title="Print {{ $booking->payment_status === 'paid' ? 'Receipt' : 'Invoice' }}">
+                                    <i class="fa-solid fa-file-invoice"></i> {{ $booking->payment_status === 'paid' ? 'Receipt' : 'Invoice' }}
+                                </a>
+
                                 @if(in_array($booking->status, ['pending', 'confirmed']) && $booking->payment_status === 'paid')
                                     <form action="{{ route('admin.bookings.check_in', $booking->id) }}" method="POST" style="margin: 0;">
                                         @csrf

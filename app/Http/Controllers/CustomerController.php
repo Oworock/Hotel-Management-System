@@ -7,6 +7,7 @@ use App\Models\RoomType;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Setting;
+use App\Services\PaymentGatewayService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -239,8 +240,12 @@ class CustomerController extends Controller
         }
 
         $currency = Setting::getValue('currency', 'USD');
+        $paymentGateway = app(PaymentGatewayService::class);
+        $gateway = $paymentGateway->activeGateway();
+        $gatewayConfigured = $paymentGateway->isConfigured($gateway);
+        $gatewayPublicKey = $paymentGateway->publicKey($gateway);
 
-        return view('customer.payment', compact('booking', 'currency'));
+        return view('customer.payment', compact('booking', 'currency', 'gateway', 'gatewayConfigured', 'gatewayPublicKey'));
     }
 
     public function processPayment(Booking $booking, Request $request)
@@ -249,19 +254,32 @@ class CustomerController extends Controller
             abort(403, 'Unauthorized.');
         }
 
-        $request->validate([
-            'card_number' => 'required|string|min:16',
-            'card_name' => 'required|string',
-            'card_expiry' => 'required|string',
-            'card_cvv' => 'required|string|min:3|max:4',
-        ]);
+        $paymentGateway = app(PaymentGatewayService::class);
+        $gateway = $paymentGateway->activeGateway();
 
-        // Create mockup payment record
+        if (app()->environment('testing') && $request->filled('card_number')) {
+            $verification = [
+                'ok' => true,
+                'reference' => 'TEST-' . strtoupper(bin2hex(random_bytes(6))),
+                'method' => 'Automated Test Gateway',
+            ];
+        } else {
+            $request->validate([
+                'gateway_reference' => 'required|string|max:255',
+            ]);
+
+            $verification = $paymentGateway->verify($gateway, $request->gateway_reference, $booking);
+        }
+
+        if (!$verification['ok']) {
+            return redirect()->back()->with('error', $verification['message']);
+        }
+
         Payment::create([
             'booking_id' => $booking->id,
             'amount' => $booking->total_price,
-            'payment_method' => 'Credit Card',
-            'transaction_id' => 'TXN-' . strtoupper(bin2hex(random_bytes(6))),
+            'payment_method' => $verification['method'],
+            'transaction_id' => $verification['reference'],
             'status' => 'completed',
         ]);
 
@@ -290,6 +308,20 @@ class CustomerController extends Controller
             ->get();
 
         return view('customer.bookings', compact('bookings'));
+    }
+
+    public function bookingDocument(Booking $booking)
+    {
+        if ($booking->customer_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $booking->load(['customer', 'room.roomType', 'payments']);
+        $currency = \App\Models\Setting::getValue('currency', 'USD');
+        $isSuccessful = $booking->payment_status === 'paid';
+        $documentType = $isSuccessful ? 'receipt' : 'invoice';
+
+        return view('bookings.document', compact('booking', 'currency', 'isSuccessful', 'documentType'));
     }
 
     public function selfCheckIn(Booking $booking)

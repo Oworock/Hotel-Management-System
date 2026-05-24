@@ -35,6 +35,20 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\View::share('navPages', collect());
         }
 
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('navigation_menu_items')) {
+                \Illuminate\Support\Facades\View::share('navMenuItems', \App\Models\NavigationMenuItem::with('page')
+                    ->where('is_active', true)
+                    ->orderBy('order')
+                    ->orderBy('id')
+                    ->get());
+            } else {
+                \Illuminate\Support\Facades\View::share('navMenuItems', collect());
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\View::share('navMenuItems', collect());
+        }
+
         $this->registerCoreDocs();
     }
 

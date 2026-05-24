@@ -5,9 +5,10 @@
 @section('content')
 @php
     $currency = \App\Models\Setting::getValue('currency', '$');
-    $restrictedType = null;
+    $restrictedType = $restrictedType ?? null;
+    $currentType = $currentType ?? request('type', 'all');
     $user = auth()->user();
-    if (!$user->isAdmin() && !$user->isSuperAdmin()) {
+    if (!$restrictedType && !$user->isAdmin() && !$user->isSuperAdmin()) {
         if ($user->role === 'tuck_shop_manager' || ($user->hasFunction('manage_tuck_shop') && !$user->hasFunction('manage_restaurant'))) {
             $restrictedType = 'tuck_shop';
         } elseif ($user->role === 'restaurant_manager' || ($user->hasFunction('manage_restaurant') && !$user->hasFunction('manage_tuck_shop'))) {
@@ -48,10 +49,10 @@
     @if(!$restrictedType)
     <!-- Product Sub-Filters -->
     <div class="glass-panel" style="padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-        <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Filter Type:</span>
-        <button onclick="filterProducts('all')" id="filter-btn-all" class="btn btn-sm btn-primary filter-tab-btn" style="padding: 0.4rem 1rem; font-size: 0.85rem;">All Items</button>
-        <button onclick="filterProducts('tuck_shop')" id="filter-btn-tuck_shop" class="btn btn-sm btn-outline filter-tab-btn" style="padding: 0.4rem 1rem; font-size: 0.85rem;">Tuck Shop</button>
-        <button onclick="filterProducts('restaurant')" id="filter-btn-restaurant" class="btn btn-sm btn-outline filter-tab-btn" style="padding: 0.4rem 1rem; font-size: 0.85rem;">Restaurant Menu</button>
+        <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Catalog:</span>
+        <a href="{{ route('admin.products') }}" class="btn btn-sm {{ $currentType === 'all' ? 'btn-primary' : 'btn-outline' }}" style="padding: 0.4rem 1rem; font-size: 0.85rem; text-decoration:none;">All Items</a>
+        <a href="{{ route('admin.products', ['type' => 'tuck_shop']) }}" class="btn btn-sm {{ $currentType === 'tuck_shop' ? 'btn-primary' : 'btn-outline' }}" style="padding: 0.4rem 1rem; font-size: 0.85rem; text-decoration:none;">Tuck Shop</a>
+        <a href="{{ route('admin.products', ['type' => 'restaurant']) }}" class="btn btn-sm {{ $currentType === 'restaurant' ? 'btn-primary' : 'btn-outline' }}" style="padding: 0.4rem 1rem; font-size: 0.85rem; text-decoration:none;">Restaurant Menu</a>
     </div>
     @endif
 

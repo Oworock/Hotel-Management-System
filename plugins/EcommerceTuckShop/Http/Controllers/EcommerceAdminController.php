@@ -116,6 +116,10 @@ class EcommerceAdminController extends Controller
             'ecommerce_free_shipping_limit' => Setting::getValue('ecommerce_free_shipping_limit', '50.00'),
             'ecommerce_tax_rate' => Setting::getValue('ecommerce_tax_rate', Setting::getValue('tax_rate', '12')),
             'ecommerce_store_status' => Setting::getValue('ecommerce_store_status', 'open'),
+            'ecommerce_tuck_shop_enabled' => Setting::getValue('ecommerce_tuck_shop_enabled', '1'),
+            'ecommerce_restaurant_enabled' => Setting::getValue('ecommerce_restaurant_enabled', '1'),
+            'ecommerce_tuck_shop_name' => Setting::getValue('ecommerce_tuck_shop_name', 'Tuck Shop'),
+            'ecommerce_restaurant_name' => Setting::getValue('ecommerce_restaurant_name', 'Restaurant'),
         ];
 
         return view('ecommerce.settings', compact('settings'));
@@ -130,6 +134,10 @@ class EcommerceAdminController extends Controller
             'ecommerce_free_shipping_limit' => 'required|numeric|min:0',
             'ecommerce_tax_rate' => 'required|numeric|min:0|max:100',
             'ecommerce_store_status' => 'required|in:open,closed',
+            'ecommerce_tuck_shop_enabled' => 'nullable|boolean',
+            'ecommerce_restaurant_enabled' => 'nullable|boolean',
+            'ecommerce_tuck_shop_name' => 'nullable|string|max:120',
+            'ecommerce_restaurant_name' => 'nullable|string|max:120',
         ]);
 
         Setting::setValue('ecommerce_store_name', $request->ecommerce_store_name);
@@ -138,6 +146,10 @@ class EcommerceAdminController extends Controller
         Setting::setValue('ecommerce_free_shipping_limit', number_format((float)$request->ecommerce_free_shipping_limit, 2, '.', ''));
         Setting::setValue('ecommerce_tax_rate', $request->ecommerce_tax_rate);
         Setting::setValue('ecommerce_store_status', $request->ecommerce_store_status);
+        Setting::setValue('ecommerce_tuck_shop_enabled', $request->exists('ecommerce_tuck_shop_enabled') ? ($request->boolean('ecommerce_tuck_shop_enabled') ? '1' : '0') : '1');
+        Setting::setValue('ecommerce_restaurant_enabled', $request->exists('ecommerce_restaurant_enabled') ? ($request->boolean('ecommerce_restaurant_enabled') ? '1' : '0') : '1');
+        Setting::setValue('ecommerce_tuck_shop_name', $request->filled('ecommerce_tuck_shop_name') ? $request->ecommerce_tuck_shop_name : Setting::getValue('ecommerce_tuck_shop_name', 'Tuck Shop'));
+        Setting::setValue('ecommerce_restaurant_name', $request->filled('ecommerce_restaurant_name') ? $request->ecommerce_restaurant_name : Setting::getValue('ecommerce_restaurant_name', 'Restaurant'));
 
         return redirect()->back()->with('success', 'E-commerce store settings updated successfully!');
     }

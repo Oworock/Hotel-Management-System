@@ -41,6 +41,11 @@ class HotelScope implements Scope
                 // Non-super admins (admin, receptionist, staff, etc.) are scoped to their assigned hotel
                 $builder->where($model->getTable() . '.hotel_id', $user->hotel_id);
             }
+        } elseif (!($model instanceof \App\Models\User) && request()->hasSession() && session()->has('active_hotel_id')) {
+            $activeHotelId = session('active_hotel_id');
+            if ($activeHotelId !== null && $activeHotelId !== '') {
+                $builder->where($model->getTable() . '.hotel_id', $activeHotelId);
+            }
         }
     }
 }

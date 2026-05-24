@@ -1,105 +1,116 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 p-6">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Manage Gallery</h1>
-            <button onclick="openAddModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                + Add Photo
-            </button>
+<div class="admin-page-shell animate-fade-in">
+    <div class="glass-panel admin-page-header">
+        <div>
+            <h1 class="admin-page-title">Gallery Management</h1>
+            <p class="admin-page-subtitle">Curate property images that make rooms, dining, and facilities feel real to guests.</p>
         </div>
+        <button type="button" onclick="openGalleryModal()" class="btn btn-primary">
+            <i class="fa-solid fa-image"></i> Add Photo
+        </button>
+    </div>
 
-        @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-            {{ session('success') }}
-        </div>
-        @endif
+    @if(session('success'))
+        <div class="alert alert-success" style="margin-bottom:1rem;">{{ session('success') }}</div>
+    @endif
 
-        <div class="bg-white rounded-lg shadow p-6">
-            @if($photos->isNotEmpty())
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($photos as $photo)
-                <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition">
-                    <img src="{{ asset('storage/' . $photo->image) }}" alt="{{ $photo->title }}" class="w-full h-40 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-semibold text-gray-800 mb-1">{{ $photo->title }}</h3>
-                        @if($photo->description)
-                        <p class="text-sm text-gray-600 mb-2">{{ Str::limit($photo->description, 50) }}</p>
-                        @endif
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-500">Order: {{ $photo->order }}</span>
-                            <div class="flex gap-2">
-                                <button onclick="editPhoto({{ $photo->id }})" class="text-blue-600 hover:text-blue-800">Edit</button>
-                                <form method="POST" action="{{ route('admin.gallery.delete', $photo) }}" class="inline" onsubmit="return confirm('Delete this photo?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800">Delete</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+    <div class="admin-grid">
+        @forelse($photos as $photo)
+            <article class="admin-card">
+                <div class="admin-card-media">
+                    <img src="{{ \Illuminate\Support\Str::startsWith($photo->image, ['http://', 'https://']) ? $photo->image : asset('storage/' . $photo->image) }}" alt="{{ $photo->title }}">
                 </div>
-                @endforeach
-            </div>
-            @else
-            <div class="p-12 text-center">
-                <p class="text-gray-500">No photos yet. Upload your first photo!</p>
-            </div>
-            @endif
-        </div>
+                <h3 class="admin-card-title">{{ $photo->title }}</h3>
+                <p class="admin-card-text">{{ \Illuminate\Support\Str::limit($photo->description ?: 'No description added.', 95) }}</p>
+                <div class="admin-card-actions">
+                    <span class="status-pill {{ $photo->is_active ? 'active' : '' }}">{{ $photo->is_active ? 'Active' : 'Inactive' }}</span>
+                    <span class="status-pill">Order {{ $photo->order }}</span>
+                </div>
+                <div class="admin-card-actions">
+                    <button type="button" class="btn btn-outline" onclick='editPhoto(@json($photo))'><i class="fa-solid fa-pen"></i> Edit</button>
+                    <form method="POST" action="{{ route('admin.gallery.delete', $photo) }}" onsubmit="return confirm('Delete this photo?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                    </form>
+                </div>
+            </article>
+        @empty
+            <div class="glass-panel empty-state" style="grid-column:1 / -1;">No photos yet. Upload polished property images to start the gallery.</div>
+        @endforelse
     </div>
 </div>
 
-<!-- Add/Edit Modal -->
-<div id="galleryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
-    <div class="bg-white rounded-lg shadow-lg max-w-lg w-full mx-4 my-8 p-6">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">Add/Edit Photo</h2>
-        <form id="galleryForm" method="POST" action="" enctype="multipart/form-data">
+<div id="galleryModal" class="modal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="galleryModalTitle" style="margin:0;color:var(--text-primary);">Add Photo</h2>
+            <button type="button" class="btn btn-outline" onclick="closeGalleryModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="galleryForm" method="POST" action="{{ route('admin.gallery.store') }}" enctype="multipart/form-data">
             @csrf
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Title</label>
-                <input type="text" name="title" id="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="title">Title</label>
+                    <input type="text" name="title" id="title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="order">Display Order</label>
+                    <input type="number" name="order" id="order" class="form-control" min="0" value="0">
+                </div>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                <textarea name="description" id="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea name="description" id="description" rows="3" class="form-control"></textarea>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Photo</label>
-                <input type="file" name="image" id="image" accept="image/*" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+            <div class="form-group">
+                <label class="form-label" for="image">Photo</label>
+                <input type="file" name="image" id="image" accept="image/*" class="form-control" required>
+                <p id="imageHint" class="form-hint">Upload a clear image. Recommended minimum width: 1200px.</p>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Order</label>
-                <input type="number" name="order" id="order" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" min="0" value="0">
-            </div>
-            <div class="mb-6">
-                <label class="flex items-center">
-                    <input type="checkbox" name="is_active" id="is_active" class="w-4 h-4 text-blue-600 border-gray-300 rounded" checked>
-                    <span class="ml-2 text-gray-700">Active</span>
+            <div class="form-group">
+                <label class="form-checkbox">
+                    <input type="checkbox" name="is_active" id="is_active" value="1" checked>
+                    <span>Active on website</span>
                 </label>
             </div>
-            <div class="flex gap-3">
-                <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Save</button>
-                <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 transition">Cancel</button>
+            <div class="admin-card-actions" style="justify-content:flex-end;">
+                <button type="button" class="btn btn-outline" onclick="closeGalleryModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Photo</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-function openAddModal() {
-    document.getElementById('galleryForm').reset();
-    document.getElementById('galleryForm').action = "{{ route('admin.gallery.store') }}";
-    document.getElementById('galleryModal').classList.remove('hidden');
+function openGalleryModal() {
+    const form = document.getElementById('galleryForm');
+    form.reset();
+    form.action = "{{ route('admin.gallery.store') }}";
+    document.getElementById('galleryModalTitle').textContent = 'Add Photo';
+    document.getElementById('image').required = true;
+    document.getElementById('imageHint').textContent = 'Upload a clear image. Recommended minimum width: 1200px.';
+    document.getElementById('is_active').checked = true;
+    document.getElementById('galleryModal').classList.add('active');
 }
 
-function closeModal() {
-    document.getElementById('galleryModal').classList.add('hidden');
+function editPhoto(photo) {
+    const form = document.getElementById('galleryForm');
+    form.action = `/admin/gallery/${photo.id}/update`;
+    document.getElementById('galleryModalTitle').textContent = 'Edit Photo';
+    document.getElementById('title').value = photo.title || '';
+    document.getElementById('description').value = photo.description || '';
+    document.getElementById('order').value = photo.order || 0;
+    document.getElementById('image').required = false;
+    document.getElementById('imageHint').textContent = 'Leave blank to keep the current photo.';
+    document.getElementById('is_active').checked = Boolean(photo.is_active);
+    document.getElementById('galleryModal').classList.add('active');
 }
 
-function editPhoto(id) {
-    alert('Edit functionality - implement with AJAX');
+function closeGalleryModal() {
+    document.getElementById('galleryModal').classList.remove('active');
 }
 </script>
 @endsection

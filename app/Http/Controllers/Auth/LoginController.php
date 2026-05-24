@@ -35,6 +35,11 @@ class LoginController extends Controller
 
             $request->session()->regenerate();
 
+            $intendedUrl = $request->session()->pull('url.intended');
+            if ($user->role === 'customer' && $intendedUrl) {
+                return redirect()->to($intendedUrl);
+            }
+
             return $this->redirectUserByRole($user);
         }
 

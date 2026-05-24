@@ -10,6 +10,7 @@ use App\Models\StaffShift;
 use App\Models\User;
 use App\Models\Setting;
 use App\Models\HeroSlide;
+use App\Models\Amenity;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -79,7 +80,6 @@ class AdminController extends Controller
             'contact_email' => Setting::getValue('contact_email', 'info@aetheriagrand.com'),
             'global_header' => Setting::getValue('global_header', '✨ Welcome to Aetheria Grand Hotel - Book directly to get 15% off and free breakfast!'),
             'global_footer' => Setting::getValue('global_footer', '© 2026 Aetheria Grand Hotel. All rights reserved.'),
-            'testimonials_list' => Setting::getValue('testimonials_list', '[]'),
         ];
         
         $slides = HeroSlide::orderBy('sort_order')->get();
@@ -103,9 +103,16 @@ class AdminController extends Controller
 
     public function rooms()
     {
-        $rooms = Room::with('roomType')->orderBy('room_number')->get();
-        $roomTypes = RoomType::all();
-        return view('admin.rooms', compact('rooms', 'roomTypes'));
+        $rooms = Room::with('roomType')->orderBy('room_number')->paginate(12, ['*'], 'rooms_page');
+        $roomTypes = RoomType::withCount('rooms')->orderBy('name')->paginate(6, ['*'], 'types_page');
+        $roomTypesList = RoomType::orderBy('name')->get();
+        $standardAmenities = Amenity::where('category', 'room')
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.rooms', compact('rooms', 'roomTypes', 'roomTypesList', 'standardAmenities'));
     }
 
     public function storeRoom(Request $request)
@@ -255,7 +262,6 @@ class AdminController extends Controller
             'contact_email' => 'nullable|email|max:255',
             'global_header' => 'nullable|string',
             'global_footer' => 'nullable|string',
-            'testimonials_list' => 'nullable|string',
         ]);
 
         foreach ($data as $key => $value) {
@@ -309,6 +315,16 @@ class AdminController extends Controller
         $customers = User::where('role', 'customer')->orderBy('name')->get();
         $coupons = \App\Models\Coupon::where('is_active', true)->get();
         return view('admin.bookings', compact('bookings', 'roomTypes', 'customers', 'coupons'));
+    }
+
+    public function bookingDocument(Booking $booking)
+    {
+        $booking->load(['customer', 'room.roomType', 'payments']);
+        $currency = Setting::getValue('currency', 'USD');
+        $isSuccessful = $booking->payment_status === 'paid';
+        $documentType = $isSuccessful ? 'receipt' : 'invoice';
+
+        return view('bookings.document', compact('booking', 'currency', 'isSuccessful', 'documentType'));
     }
 
     public function storeWalkInBooking(Request $request)
@@ -689,19 +705,20 @@ class AdminController extends Controller
             'check_out_time' => Setting::getValue('check_out_time', '11:00'),
             'contact_email' => Setting::getValue('contact_email', 'info@aetheriagrand.com'),
             'contact_phone' => Setting::getValue('contact_phone', '+1 (555) 123-4567'),
+            'physical_address' => Setting::getValue('physical_address', 'Golden Coast Beach Boulevard, Suite A, Victoria'),
             'map_address' => Setting::getValue('map_address'),
             'primary_color' => Setting::getValue('primary_color', '#6e44ff'),
             'secondary_color' => Setting::getValue('secondary_color', '#f44496'),
             'logo_type' => Setting::getValue('logo_type', 'text'),
             'logo_text' => Setting::getValue('logo_text', '<i class="fa-solid fa-hotel"></i> Aetheria'),
             'logo_image' => Setting::getValue('logo_image', ''),
+            'auth_background_image' => Setting::getValue('auth_background_image', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1800'),
             'global_header' => Setting::getValue('global_header', '✨ Welcome to Aetheria Grand Hotel'),
             'global_footer' => Setting::getValue('global_footer', '© 2026 Aetheria Grand Hotel. All rights reserved.'),
             
             // Hotel settings keys
             'hero_subtitle' => Setting::getValue('hero_subtitle', 'Experience Luxury & Paradise'),
             'welcome_description' => Setting::getValue('welcome_description', 'Nestled in a serene oasis, Aetheria Grand Hotel offers the ultimate blend of elegance, comfort, and world-class service.'),
-            'testimonials_list' => Setting::getValue('testimonials_list', '[]'),
 
             'mail_host' => Setting::getValue('mail_host', 'smtp.mailtrap.io'),
             'mail_port' => Setting::getValue('mail_port', '2525'),
@@ -710,7 +727,7 @@ class AdminController extends Controller
             'mail_encryption' => Setting::getValue('mail_encryption', 'tls'),
             'mail_from_address' => Setting::getValue('mail_from_address', 'noreply@aetheriagrand.com'),
             
-            'active_payment_gateway' => Setting::getValue('active_payment_gateway', 'card_simulation'),
+            'active_payment_gateway' => Setting::getValue('active_payment_gateway', 'disabled'),
             'paystack_public_key' => Setting::getValue('paystack_public_key'),
             'paystack_secret_key' => Setting::getValue('paystack_secret_key'),
             'flutterwave_public_key' => Setting::getValue('flutterwave_public_key'),
@@ -746,6 +763,7 @@ class AdminController extends Controller
             'check_out_time' => 'required|string',
             'contact_email' => 'required|email|max:255',
             'contact_phone' => 'required|string|max:50',
+            'physical_address' => 'nullable|string|max:1000',
             'map_address' => 'nullable|string',
             
             'primary_color' => 'nullable|string|max:50',
@@ -753,13 +771,13 @@ class AdminController extends Controller
             'logo_type' => 'nullable|in:text,image',
             'logo_text' => 'nullable|string',
             'logo_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'auth_background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'global_header' => 'nullable|string',
             'global_footer' => 'nullable|string',
             
             // Hotel settings keys
             'hero_subtitle' => 'nullable|string|max:255',
             'welcome_description' => 'nullable|string',
-            'testimonials_list' => 'nullable|string',
         ];
 
         if ($isSuper) {
@@ -771,7 +789,7 @@ class AdminController extends Controller
                 'mail_encryption' => 'nullable|string',
                 'mail_from_address' => 'nullable|string',
                 
-                'active_payment_gateway' => 'required|in:card_simulation,paystack,flutterwave',
+                'active_payment_gateway' => 'nullable|in:disabled,paystack,flutterwave,card_simulation',
                 'paystack_public_key' => 'nullable|string',
                 'paystack_secret_key' => 'nullable|string',
                 'flutterwave_public_key' => 'nullable|string',
@@ -788,10 +806,23 @@ class AdminController extends Controller
                 'custom_sms_method' => 'nullable|in:GET,POST',
                 'custom_sms_headers' => 'nullable|string',
                 'custom_sms_payload' => 'nullable|string',
+                'custom_sms_header_keys' => 'nullable|array',
+                'custom_sms_header_values' => 'nullable|array',
+                'custom_sms_payload_keys' => 'nullable|array',
+                'custom_sms_payload_values' => 'nullable|array',
             ]);
         }
 
         $data = $request->validate($rules);
+        $data = $this->normalizeCustomSmsSettings($request, $data);
+
+        if ($isSuper && !array_key_exists('active_payment_gateway', $data)) {
+            $data['active_payment_gateway'] = Setting::getValue('active_payment_gateway', 'disabled');
+        }
+
+        if (($data['active_payment_gateway'] ?? null) === 'card_simulation') {
+            $data['active_payment_gateway'] = 'disabled';
+        }
 
         if ($request->hasFile('logo_image')) {
             $file = $request->file('logo_image');
@@ -800,13 +831,62 @@ class AdminController extends Controller
             Setting::setValue('logo_image', '/uploads/' . $fileName);
         }
 
+        if ($request->hasFile('auth_background_image')) {
+            $file = $request->file('auth_background_image');
+            $fileName = 'auth_bg_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads'), $fileName);
+            Setting::setValue('auth_background_image', '/uploads/' . $fileName);
+        }
+
         foreach ($data as $key => $value) {
-            if ($key !== 'logo_image') {
+            if (!in_array($key, ['logo_image', 'auth_background_image'], true)) {
                 Setting::setValue($key, $value);
             }
         }
 
         return redirect()->back()->with('success', 'Hotel and settings configurations updated successfully.');
+    }
+
+    protected function normalizeCustomSmsSettings(Request $request, array $data): array
+    {
+        unset(
+            $data['custom_sms_header_keys'],
+            $data['custom_sms_header_values'],
+            $data['custom_sms_payload_keys'],
+            $data['custom_sms_payload_values']
+        );
+
+        if ($request->has('custom_sms_header_keys')) {
+            $data['custom_sms_headers'] = $this->smsPairsToJson(
+                $request->input('custom_sms_header_keys', []),
+                $request->input('custom_sms_header_values', [])
+            );
+        }
+
+        if ($request->has('custom_sms_payload_keys')) {
+            $data['custom_sms_payload'] = $this->smsPairsToJson(
+                $request->input('custom_sms_payload_keys', []),
+                $request->input('custom_sms_payload_values', [])
+            );
+        }
+
+        return $data;
+    }
+
+    protected function smsPairsToJson(array $keys, array $values): string
+    {
+        $pairs = [];
+
+        foreach ($keys as $index => $key) {
+            $key = trim((string) $key);
+            if ($key === '') {
+                continue;
+            }
+
+            $pairs[$key] = (string) ($values[$index] ?? '');
+        }
+
+        return json_encode($pairs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     public function sliderStore(Request $request)
@@ -890,4 +970,3 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Hero slide deleted successfully.');
     }
 }
-

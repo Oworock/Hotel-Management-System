@@ -67,6 +67,12 @@
                             <i class="fa-solid fa-location-dot" style="color: var(--primary); margin-top: 0.2rem; width: 16px;"></i>
                             <span>{{ $hotel->address }}</span>
                         </div>
+                        @if($hotel->map_embed_url)
+                            <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                                <i class="fa-solid fa-map" style="color: var(--primary); margin-top: 0.2rem; width: 16px;"></i>
+                                <span>Custom Google Map configured</span>
+                            </div>
+                        @endif
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fa-solid fa-phone" style="color: var(--primary); width: 16px;"></i>
                             <span>{{ $hotel->phone }}</span>
@@ -77,13 +83,30 @@
                         </div>
                         @if($hotel->description)
                             <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.05); font-style: italic;">
-                                {{ Str::limit($hotel->description, 120) }}
+                                {{ \Illuminate\Support\Str::limit($hotel->description, 120) }}
                             </div>
                         @endif
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem;">
+                            <div style="border:1px solid var(--border-color);border-radius:8px;padding:.65rem;text-align:center;">
+                                <strong style="display:block;color:var(--text-primary);">{{ $hotel->room_types_count ?? 0 }}</strong>
+                                <span style="font-size:.75rem;">Types</span>
+                            </div>
+                            <div style="border:1px solid var(--border-color);border-radius:8px;padding:.65rem;text-align:center;">
+                                <strong style="display:block;color:var(--text-primary);">{{ $hotel->rooms_count ?? 0 }}</strong>
+                                <span style="font-size:.75rem;">Rooms</span>
+                            </div>
+                            <div style="border:1px solid var(--border-color);border-radius:8px;padding:.65rem;text-align:center;">
+                                <strong style="display:block;color:var(--text-primary);">{{ $hotel->staff_count ?? 0 }}</strong>
+                                <span style="font-size:.75rem;">Staff</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem; margin-top: auto;">
+                <div style="display: flex; gap: 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1rem; margin-top: auto; flex-wrap: wrap;">
+                    <a class="btn btn-primary" href="{{ route('super_admin.hotels.manage', $hotel) }}" style="flex: 1 1 100%; padding: 0.5rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; text-decoration:none;">
+                        <i class="fa-solid fa-door-open"></i> Manage Rooms & Staff
+                    </a>
                     <button class="btn btn-secondary" onclick="openEditModal({{ json_encode($hotel) }})" style="flex: 1; padding: 0.5rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;">
                         <i class="fa-solid fa-edit"></i> Edit Details
                     </button>
@@ -138,6 +161,10 @@
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Address</label>
                     <input type="text" name="address" required class="form-control" style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 0.6rem; color: #fff;">
                 </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Google Maps Embed URL / Iframe Code</label>
+                    <textarea name="map_embed_url" rows="2" class="form-control" style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 0.6rem; color: #fff; resize: none;"></textarea>
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
                         <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Phone</label>
@@ -185,6 +212,10 @@
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Address</label>
                     <input type="text" name="address" id="edit_address" required class="form-control" style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 0.6rem; color: #fff;">
                 </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Google Maps Embed URL / Iframe Code</label>
+                    <textarea name="map_embed_url" id="edit_map_embed_url" rows="2" class="form-control" style="width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 0.6rem; color: #fff; resize: none;"></textarea>
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
                         <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem;">Phone</label>
@@ -228,6 +259,7 @@
     function openEditModal(hotel) {
         document.getElementById('edit_name').value = hotel.name;
         document.getElementById('edit_address').value = hotel.address;
+        document.getElementById('edit_map_embed_url').value = hotel.map_embed_url || '';
         document.getElementById('edit_phone').value = hotel.phone;
         document.getElementById('edit_email').value = hotel.email;
         document.getElementById('edit_description').value = hotel.description || '';

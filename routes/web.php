@@ -13,7 +13,6 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InstallController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\ContentManagementController;
-
 // Installer & Licensing Routes
 Route::get('/install', [InstallController::class, 'showInstall'])->name('install');
 Route::post('/install', [InstallController::class, 'processInstall']);
@@ -28,6 +27,7 @@ Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::get('/rooms', [HomeController::class, 'rooms'])->name('rooms');
 Route::get('/pages/{slug}', [HomeController::class, 'showPage'])->name('frontend.page');
+Route::post('/locale', [ThemeController::class, 'setLocale'])->name('locale.set');
 
 // Guest Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -115,6 +115,7 @@ Route::middleware('auth')->group(function () {
         // Bookings Management
         Route::middleware('role:admin,super_admin,receptionist,manage_bookings')->group(function () {
             Route::get('/bookings', [AdminController::class, 'bookings'])->name('admin.bookings');
+            Route::get('/bookings/{booking}/document', [AdminController::class, 'bookingDocument'])->name('admin.bookings.document');
             Route::post('/bookings/walkin', [AdminController::class, 'storeWalkInBooking'])->name('admin.bookings.walkin');
             Route::post('/bookings/{booking}/check-in', [AdminController::class, 'checkInGuest'])->name('admin.bookings.check_in');
             Route::post('/bookings/{booking}/check-out', [AdminController::class, 'checkOutGuest'])->name('admin.bookings.check_out');
@@ -194,6 +195,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/payment/{booking}', [CustomerController::class, 'showPaymentForm'])->name('customer.payment');
         Route::post('/payment/{booking}', [CustomerController::class, 'processPayment'])->name('customer.payment.process');
         Route::get('/bookings', [CustomerController::class, 'bookings'])->name('customer.bookings');
+        Route::get('/bookings/{booking}/document', [CustomerController::class, 'bookingDocument'])->name('customer.bookings.document');
         Route::post('/bookings/{booking}/check-in', [CustomerController::class, 'selfCheckIn'])->name('customer.bookings.check_in');
         Route::post('/bookings/{booking}/check-out', [CustomerController::class, 'selfCheckOut'])->name('customer.bookings.check_out');
     });
@@ -242,12 +244,25 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('super-admin')->group(fu
     Route::get('/themes', [ThemeController::class, 'themes'])->name('super_admin.themes');
     Route::post('/themes/{theme}/activate', [ThemeController::class, 'activateTheme'])->name('super_admin.themes.activate');
     Route::post('/themes/{theme}/colors', [ThemeController::class, 'updateThemeColors'])->name('super_admin.themes.colors');
+    Route::post('/themes/{theme}/content', [ThemeController::class, 'updateThemeContent'])->name('super_admin.themes.content');
+
+    // Frontend content and navigation
+    Route::get('/frontend-content', [ThemeController::class, 'frontendContent'])->name('super_admin.frontend_content');
+    Route::post('/frontend-content', [ThemeController::class, 'updateFrontendContent'])->name('super_admin.frontend_content.update');
+    Route::post('/frontend-content/prefill', [ThemeController::class, 'prefillFrontendContent'])->name('super_admin.frontend_content.prefill');
+    Route::post('/navigation-menu', [ThemeController::class, 'storeNavigationMenuItem'])->name('super_admin.navigation.store');
+    Route::post('/navigation-menu/{menuItem}/update', [ThemeController::class, 'updateNavigationMenuItem'])->name('super_admin.navigation.update');
+    Route::delete('/navigation-menu/{menuItem}', [ThemeController::class, 'deleteNavigationMenuItem'])->name('super_admin.navigation.delete');
 
     // Languages
     Route::get('/languages', [ThemeController::class, 'languages'])->name('super_admin.languages');
     Route::post('/languages', [ThemeController::class, 'storeLanguage'])->name('super_admin.languages.store');
     Route::post('/languages/{language}/update', [ThemeController::class, 'updateLanguage'])->name('super_admin.languages.update');
     Route::delete('/languages/{language}', [ThemeController::class, 'deleteLanguage'])->name('super_admin.languages.delete');
+    Route::post('/translations/sync', [ThemeController::class, 'syncTranslations'])->name('super_admin.translations.sync');
+    Route::post('/translations', [ThemeController::class, 'storeTranslation'])->name('super_admin.translations.store');
+    Route::post('/translations/{translation}/update', [ThemeController::class, 'updateTranslation'])->name('super_admin.translations.update');
+    Route::delete('/translations/{translation}', [ThemeController::class, 'deleteTranslation'])->name('super_admin.translations.delete');
 
     // Currencies
     Route::get('/currencies', [ThemeController::class, 'currencies'])->name('super_admin.currencies');
@@ -274,3 +289,9 @@ Route::middleware(['auth', 'role:admin,super_admin'])->prefix('admin')->group(fu
         return view('admin.analytics');
     })->name('admin.analytics');
 });
+
+// Dark Mode Toggle
+Route::middleware('auth')->post('/toggle-dark-mode', function () {
+    \App\Helpers\DarkModeHelper::toggleDarkMode();
+    return back();
+})->name('toggle.dark.mode');

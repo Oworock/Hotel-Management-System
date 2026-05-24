@@ -50,6 +50,7 @@ class SuperAdminController extends Controller
             'check_out_time' => Setting::getValue('check_out_time', '11:00'),
             'contact_email' => Setting::getValue('contact_email', 'info@aetheriagrand.com'),
             'contact_phone' => Setting::getValue('contact_phone', '+1 (555) 123-4567'),
+            'physical_address' => Setting::getValue('physical_address', 'Golden Coast Beach Boulevard, Suite A, Victoria'),
             
             'primary_color' => Setting::getValue('primary_color', '#6e44ff'),
             'secondary_color' => Setting::getValue('secondary_color', '#f44496'),
@@ -57,6 +58,7 @@ class SuperAdminController extends Controller
             'logo_type' => Setting::getValue('logo_type', 'text'),
             'logo_text' => Setting::getValue('logo_text', '<i class="fa-solid fa-hotel"></i> Aetheria'),
             'logo_image' => Setting::getValue('logo_image', ''),
+            'auth_background_image' => Setting::getValue('auth_background_image', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1800'),
             'global_header' => Setting::getValue('global_header', '✨ Welcome to Aetheria Grand Hotel'),
             'global_footer' => Setting::getValue('global_footer', '© 2026 Aetheria Grand Hotel. All rights reserved.'),
             
@@ -67,7 +69,6 @@ class SuperAdminController extends Controller
             'about_title' => Setting::getValue('about_title', 'A Luxury Oasis of Peace'),
             'about_description' => Setting::getValue('about_description', 'Escape the ordinary at Aetheria resorts, where luxury meets tranquility.'),
             'about_history_text' => Setting::getValue('about_history_text', 'Founded in 2012...'),
-            'testimonials_list' => Setting::getValue('testimonials_list', '[]'),
             'map_address' => Setting::getValue('map_address'),
             
             'mail_host' => Setting::getValue('mail_host', 'smtp.mailtrap.io'),
@@ -77,7 +78,7 @@ class SuperAdminController extends Controller
             'mail_encryption' => Setting::getValue('mail_encryption', 'tls'),
             'mail_from_address' => Setting::getValue('mail_from_address', 'noreply@aetheriagrand.com'),
             
-            'active_payment_gateway' => Setting::getValue('active_payment_gateway', 'card_simulation'),
+            'active_payment_gateway' => Setting::getValue('active_payment_gateway', 'disabled'),
             'paystack_public_key' => Setting::getValue('paystack_public_key'),
             'paystack_secret_key' => Setting::getValue('paystack_secret_key'),
             'flutterwave_public_key' => Setting::getValue('flutterwave_public_key'),
@@ -123,6 +124,7 @@ class SuperAdminController extends Controller
             'check_out_time' => 'required|string',
             'contact_email' => 'required|email|max:255',
             'contact_phone' => 'required|string|max:50',
+            'physical_address' => 'nullable|string|max:1000',
             
             'primary_color' => 'nullable|string|max:50',
             'secondary_color' => 'nullable|string|max:50',
@@ -130,6 +132,7 @@ class SuperAdminController extends Controller
             'logo_type' => 'nullable|in:text,image',
             'logo_text' => 'nullable|string',
             'logo_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'auth_background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'global_header' => 'nullable|string',
             'global_footer' => 'nullable|string',
             
@@ -140,7 +143,6 @@ class SuperAdminController extends Controller
             'about_title' => 'nullable|string|max:255',
             'about_description' => 'nullable|string',
             'about_history_text' => 'nullable|string',
-            'testimonials_list' => 'nullable|string',
             'map_address' => 'nullable|string',
             
             'mail_host' => 'nullable|string',
@@ -150,7 +152,7 @@ class SuperAdminController extends Controller
             'mail_encryption' => 'nullable|string',
             'mail_from_address' => 'nullable|string',
             
-            'active_payment_gateway' => 'required|in:card_simulation,paystack,flutterwave',
+            'active_payment_gateway' => 'nullable|in:disabled,paystack,flutterwave,card_simulation',
             'paystack_public_key' => 'nullable|string',
             'paystack_secret_key' => 'nullable|string',
             'flutterwave_public_key' => 'nullable|string',
@@ -167,6 +169,10 @@ class SuperAdminController extends Controller
             'custom_sms_method' => 'nullable|in:GET,POST',
             'custom_sms_headers' => 'nullable|string',
             'custom_sms_payload' => 'nullable|string',
+            'custom_sms_header_keys' => 'nullable|array',
+            'custom_sms_header_values' => 'nullable|array',
+            'custom_sms_payload_keys' => 'nullable|array',
+            'custom_sms_payload_values' => 'nullable|array',
 
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string|max:1000',
@@ -182,8 +188,18 @@ class SuperAdminController extends Controller
             $data['sms_gateway_provider'] = Setting::getValue('sms_gateway_provider', 'disabled');
         }
 
+        $data = $this->normalizeCustomSmsSettings($request, $data);
+
+        if (!isset($data['active_payment_gateway'])) {
+            $data['active_payment_gateway'] = Setting::getValue('active_payment_gateway', 'disabled');
+        }
+
         if (!isset($data['logo_type'])) {
             $data['logo_type'] = 'text';
+        }
+
+        if (($data['active_payment_gateway'] ?? null) === 'card_simulation') {
+            $data['active_payment_gateway'] = 'disabled';
         }
 
         Setting::setValue('promo_popup_enabled', $request->has('promo_popup_enabled') ? '1' : '0');
@@ -195,13 +211,62 @@ class SuperAdminController extends Controller
             Setting::setValue('logo_image', '/uploads/' . $fileName);
         }
 
+        if ($request->hasFile('auth_background_image')) {
+            $file = $request->file('auth_background_image');
+            $fileName = 'auth_bg_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads'), $fileName);
+            Setting::setValue('auth_background_image', '/uploads/' . $fileName);
+        }
+
         foreach ($data as $key => $value) {
-            if ($key !== 'logo_image') {
+            if (!in_array($key, ['logo_image', 'auth_background_image'], true)) {
                 Setting::setValue($key, $value);
             }
         }
 
         return redirect()->back()->with('success', 'System configurations updated successfully.');
+    }
+
+    protected function normalizeCustomSmsSettings(Request $request, array $data): array
+    {
+        unset(
+            $data['custom_sms_header_keys'],
+            $data['custom_sms_header_values'],
+            $data['custom_sms_payload_keys'],
+            $data['custom_sms_payload_values']
+        );
+
+        if ($request->has('custom_sms_header_keys')) {
+            $data['custom_sms_headers'] = $this->smsPairsToJson(
+                $request->input('custom_sms_header_keys', []),
+                $request->input('custom_sms_header_values', [])
+            );
+        }
+
+        if ($request->has('custom_sms_payload_keys')) {
+            $data['custom_sms_payload'] = $this->smsPairsToJson(
+                $request->input('custom_sms_payload_keys', []),
+                $request->input('custom_sms_payload_values', [])
+            );
+        }
+
+        return $data;
+    }
+
+    protected function smsPairsToJson(array $keys, array $values): string
+    {
+        $pairs = [];
+
+        foreach ($keys as $index => $key) {
+            $key = trim((string) $key);
+            if ($key === '') {
+                continue;
+            }
+
+            $pairs[$key] = (string) ($values[$index] ?? '');
+        }
+
+        return json_encode($pairs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     public function users()

@@ -26,9 +26,10 @@ return new class extends Migration
         if (!Schema::hasTable('hotels')) {
             Schema::create('hotels', function (Blueprint $table) {
                 $table->id();
-                $table->string('name');
-                $table->string('address')->nullable();
-                $table->string('phone')->nullable();
+            $table->string('name');
+            $table->string('address')->nullable();
+            $table->text('map_embed_url')->nullable();
+            $table->string('phone')->nullable();
                 $table->string('email')->nullable();
                 $table->text('description')->nullable();
                 $table->boolean('is_active')->default(true);
@@ -57,7 +58,7 @@ return new class extends Migration
                 if ($dbPhone) {
                     $contactPhone = $dbPhone;
                 }
-                $dbAddress = DB::table('settings')->where('key', 'map_address')->value('value');
+                $dbAddress = DB::table('settings')->where('key', 'physical_address')->value('value');
                 if ($dbAddress) {
                     $address = $dbAddress;
                 }
@@ -72,6 +73,7 @@ return new class extends Migration
             $defaultHotelId = DB::table('hotels')->insertGetId([
                 'name' => $hotelName,
                 'address' => $address,
+                'map_embed_url' => DB::table('settings')->where('key', 'map_address')->value('value'),
                 'phone' => $contactPhone,
                 'email' => $contactEmail,
                 'description' => 'Default system hotel property created on MultiHotel migration.',

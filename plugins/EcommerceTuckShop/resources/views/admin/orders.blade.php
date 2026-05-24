@@ -4,6 +4,9 @@
 
 @section('content')
 <div class="animate-fade-in" style="display: flex; flex-direction: column; gap: 2rem;">
+    @php
+        $currentType = $currentType ?? request('type', 'all');
+    @endphp
     <!-- Header with Settings Tabs -->
     <div class="glass-panel" style="padding: 1.5rem 2rem;">
         <div>
@@ -28,6 +31,11 @@
 
     <!-- Status Filters -->
     <div class="glass-panel" style="padding: 1rem 1.5rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Channel:</span>
+        <a href="{{ route('admin.orders', request()->except('type')) }}" class="btn btn-sm {{ $currentType === 'all' ? 'btn-primary' : 'btn-outline' }}" style="padding: 0.4rem 1rem; font-size: 0.85rem; text-decoration: none;">All</a>
+        <a href="{{ route('admin.orders', array_merge(request()->except('page'), ['type' => 'tuck_shop'])) }}" class="btn btn-sm {{ $currentType === 'tuck_shop' ? 'btn-primary' : 'btn-outline' }}" style="padding: 0.4rem 1rem; font-size: 0.85rem; text-decoration: none;">Tuck Shop</a>
+        <a href="{{ route('admin.orders', array_merge(request()->except('page'), ['type' => 'restaurant'])) }}" class="btn btn-sm {{ $currentType === 'restaurant' ? 'btn-primary' : 'btn-outline' }}" style="padding: 0.4rem 1rem; font-size: 0.85rem; text-decoration: none;">Restaurant</a>
+        <span style="width:1px;height:28px;background:var(--border-color);"></span>
         <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Filter Status:</span>
         <a href="{{ route('admin.orders') }}" class="btn btn-sm {{ !request()->filled('status') ? 'btn-primary' : 'btn-outline' }}" style="padding: 0.4rem 1rem; font-size: 0.85rem; text-decoration: none;">All Orders</a>
         <a href="{{ route('admin.orders', ['status' => 'pending']) }}" class="btn btn-sm {{ request('status') === 'pending' ? 'btn-primary' : 'btn-outline' }}" style="padding: 0.4rem 1rem; font-size: 0.85rem; text-decoration: none;">Pending</a>
@@ -49,7 +57,7 @@
                         <th>Total Paid</th>
                         <th>Payment Status</th>
                         <th>Order Status</th>
-                        <th style="text-align: right;">Update Action</th>
+                        <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,15 +114,20 @@
                                 </span>
                             </td>
                             <td style="text-align: right;">
-                                <form action="{{ route('admin.orders.status', $order->id) }}" method="POST" style="margin: 0; display: inline-flex; gap: 0.25rem;">
-                                    @csrf
-                                    <select name="status" class="form-control form-select" style="padding: 0.35rem 1.5rem 0.35rem 0.75rem; font-size: 0.8rem; width: 120px;" onchange="this.form.submit()">
-                                        <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="preparing" {{ $order->status === 'preparing' ? 'selected' : '' }}>Preparing</option>
-                                        <option value="delivered" {{ $order->status === 'delivered' ? 'selected' : '' }}>Delivered</option>
-                                        <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                                    </select>
-                                </form>
+                                <div style="display:inline-flex;gap:0.5rem;align-items:center;justify-content:flex-end;">
+                                    <a href="{{ route('admin.orders.document', $order) }}" target="_blank" class="btn btn-sm btn-outline" style="padding:0.35rem 0.65rem;font-size:0.8rem;text-decoration:none;">
+                                        <i class="fa-solid fa-file-invoice"></i> {{ ($order->payment_status === 'paid' || $order->payment_method === 'room_charge' || $order->status === 'delivered') ? 'Receipt' : 'Invoice' }}
+                                    </a>
+                                    <form action="{{ route('admin.orders.status', $order->id) }}" method="POST" style="margin: 0; display: inline-flex; gap: 0.25rem;">
+                                        @csrf
+                                        <select name="status" class="form-control form-select" style="padding: 0.35rem 1.5rem 0.35rem 0.75rem; font-size: 0.8rem; width: 120px;" onchange="this.form.submit()">
+                                            <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                            <option value="preparing" {{ $order->status === 'preparing' ? 'selected' : '' }}>Preparing</option>
+                                            <option value="delivered" {{ $order->status === 'delivered' ? 'selected' : '' }}>Delivered</option>
+                                            <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                        </select>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

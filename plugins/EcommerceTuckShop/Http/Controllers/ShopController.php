@@ -14,6 +14,7 @@ class ShopController extends Controller
 {
     public function index()
     {
+        $this->ensureChannelEnabled('tuck_shop');
         $products = Product::where('type', 'tuck_shop')->where('is_available', true)->get();
         $cart = session()->get('cart', []);
         $currency = Setting::getValue('currency', 'USD');
@@ -22,6 +23,7 @@ class ShopController extends Controller
 
     public function restaurantIndex()
     {
+        $this->ensureChannelEnabled('restaurant');
         $products = Product::where('type', 'restaurant')->where('is_available', true)->get();
         $cart = session()->get('cart', []);
         $currency = Setting::getValue('currency', 'USD');
@@ -39,6 +41,7 @@ class ShopController extends Controller
         if (!$product->is_available) {
             return redirect()->back()->with('error', 'Product is currently unavailable.');
         }
+        $this->ensureChannelEnabled($product->type);
 
         $cart = session()->get('cart', []);
 
@@ -81,6 +84,7 @@ class ShopController extends Controller
         if (empty($cart)) {
             return redirect()->route('shop.index')->with('error', 'Your cart is empty.');
         }
+        $this->ensureCartChannelsEnabled($cart);
 
         $currency = Setting::getValue('currency', 'USD');
         $taxRate = (float)Setting::getValue('ecommerce_tax_rate', Setting::getValue('tax_rate', '12'));
@@ -102,6 +106,7 @@ class ShopController extends Controller
         if (empty($cart)) {
             return redirect()->route('shop.index')->with('error', 'Your cart is empty.');
         }
+        $this->ensureCartChannelsEnabled($cart);
 
         $request->validate([
             'customer_name' => 'required|string|max:255',
@@ -177,5 +182,20 @@ class ShopController extends Controller
         session()->forget('cart');
 
         return redirect()->route('shop.index')->with('success', 'Order placed successfully! Reference #' . $order->id);
+    }
+
+    protected function ensureChannelEnabled(string $type): void
+    {
+        $storeOpen = Setting::getValue('ecommerce_store_status', 'open') === 'open';
+        $settingKey = $type === 'restaurant' ? 'ecommerce_restaurant_enabled' : 'ecommerce_tuck_shop_enabled';
+
+        abort_unless($storeOpen && Setting::getValue($settingKey, '1') === '1', 404);
+    }
+
+    protected function ensureCartChannelsEnabled(array $cart): void
+    {
+        foreach ($cart as $item) {
+            $this->ensureChannelEnabled($item['type'] ?? 'tuck_shop');
+        }
     }
 }

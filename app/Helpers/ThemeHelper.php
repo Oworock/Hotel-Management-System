@@ -8,9 +8,15 @@ class ThemeHelper
 {
     public static function getActiveTheme()
     {
-        return cache()->remember('active_theme', 3600, function () {
-            return Theme::where('is_active', true)->first() ?? Theme::where('is_default', true)->first();
-        });
+        $activeThemes = Theme::where('is_active', true)->latest('updated_at')->get();
+
+        if ($activeThemes->count() > 1) {
+            $themeToKeep = $activeThemes->first();
+            Theme::whereKeyNot($themeToKeep->getKey())->update(['is_active' => false]);
+            return $themeToKeep;
+        }
+
+        return $activeThemes->first() ?? Theme::where('is_default', true)->first();
     }
 
     public static function getThemeColor($colorKey)
@@ -22,19 +28,26 @@ class ThemeHelper
     public static function getThemeVariable($key)
     {
         $theme = self::getActiveTheme();
-        return $theme?->settings[$key] ?? null;
+        return $theme ? data_get($theme->settings ?? [], $key) : null;
+    }
+
+    public static function getThemeContent(string $key, ?string $default = null): ?string
+    {
+        return self::getThemeVariable("content.{$key}") ?? $default;
     }
 
     public static function getThemeView($view)
     {
         $theme = self::getActiveTheme();
-        $themeView = "themes.{$theme?->slug}.{$view}";
+        $themeView = $theme ? "themes.{$theme->slug}.{$view}" : null;
         
-        if (view()->exists($themeView)) {
+        if ($themeView && view()->exists($themeView)) {
             return $themeView;
         }
         
-        return $view;
+        $fallbackView = "themes.modern-minimal.{$view}";
+
+        return view()->exists($fallbackView) ? $fallbackView : $view;
     }
 
     public static function getThemeCss()
@@ -44,7 +57,7 @@ class ThemeHelper
 
         $css = ":root {\n";
         foreach ($theme->colors ?? [] as $key => $value) {
-            $css .= "  --color-{$key}: {$value};\n";
+            $css .= "  --{$key}: {$value};\n";
         }
         $css .= "}\n";
 

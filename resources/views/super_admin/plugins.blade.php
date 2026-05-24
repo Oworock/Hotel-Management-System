@@ -23,14 +23,6 @@
         </div>
     </div>
 
-    <!-- Alert Messages -->
-    @if(session('success'))
-        <div class="alert alert-success">
-            <i class="fa-solid fa-circle-check"></i>
-            <div>{{ session('success') }}</div>
-        </div>
-    @endif
-
     @if(session('error'))
         <div class="alert alert-danger">
             <i class="fa-solid fa-circle-exclamation"></i>

@@ -1,0 +1,1 @@
+<footer class="royal-site-footer"><strong>{{ \App\Models\Setting::getValue('hotel_name','Aetheria') }}</strong><nav><a href="/rooms">Suites</a><a href="/services">Service</a><a href="/contact">Concierge</a></nav><span>{!! \App\Models\Setting::getValue('global_footer', \App\Models\Setting::getValue('contact_phone','+1 (555) 123-4567')) !!}</span></footer>

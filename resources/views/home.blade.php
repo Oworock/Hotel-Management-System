@@ -1,7 +1,54 @@
-@extends('layouts.app')
+@extends('layouts.frontend')
+
+@section('title', 'Home')
+
+@section('styles')
+<style>
+    .home-page .bg-blue-600,
+    .home-page .hover\:bg-blue-700:hover {
+        background-color: var(--primary) !important;
+    }
+
+    .home-page .text-blue-600,
+    .home-page .hover\:text-blue-600:hover {
+        color: var(--primary) !important;
+    }
+
+    .home-page .border-blue-500,
+    .home-page .focus\:border-blue-500:focus {
+        border-color: var(--primary) !important;
+    }
+
+    .home-page .from-blue-600,
+    .home-page .from-blue-500,
+    .home-page .from-blue-400,
+    .home-page .to-cyan-600,
+    .home-page .to-cyan-500,
+    .home-page .to-cyan-400 {
+        --tw-gradient-from: var(--primary) var(--tw-gradient-from-position) !important;
+        --tw-gradient-to: var(--secondary) var(--tw-gradient-to-position) !important;
+    }
+
+    .home-page .from-blue-50,
+    .home-page .to-blue-50,
+    .home-page .hover\:bg-blue-50:hover {
+        background-color: color-mix(in srgb, var(--primary) 8%, white) !important;
+    }
+
+    .home-page .text-cyan-200,
+    .home-page .hover\:text-cyan-400:hover {
+        color: color-mix(in srgb, var(--secondary) 35%, white) !important;
+    }
+
+    .home-page .bg-gradient-to-r,
+    .home-page .bg-gradient-to-br {
+        background-image: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+    }
+</style>
+@endsection
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
+<div class="home-page min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
     <!-- Hero Section -->
     <section class="relative h-screen bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 overflow-hidden flex items-center">
         <!-- Animated Background -->
@@ -135,7 +182,7 @@
                         <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ $roomType->name }}</h3>
                         <p class="text-gray-600 mb-4">{{ Str::limit($roomType->description, 100) }}</p>
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-2xl font-bold text-blue-600">${{ $roomType->price }}</span>
+                            <span class="text-2xl font-bold text-blue-600">{{ $currency ?? '$' }}{{ $roomType->base_price ?? $roomType->price ?? 0 }}</span>
                             <span class="text-sm text-gray-500">per night</span>
                         </div>
                         <a href="{{ route('rooms') }}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
@@ -321,46 +368,5 @@
         </div>
     </section>
 
-    <!-- Footer Preview -->
-    <section class="py-16 bg-gray-900 text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                <div>
-                    <h4 class="font-bold mb-4">Quick Links</h4>
-                    <ul class="space-y-2 text-gray-300 text-sm">
-                        <li><a href="{{ route('rooms') }}" class="hover:text-white transition">Rooms</a></li>
-                        <li><a href="{{ route('services') }}" class="hover:text-white transition">Services</a></li>
-                        <li><a href="{{ route('gallery') }}" class="hover:text-white transition">Gallery</a></li>
-                        <li><a href="{{ route('faqs') }}" class="hover:text-white transition">FAQs</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold mb-4">Support</h4>
-                    <ul class="space-y-2 text-gray-300 text-sm">
-                        <li><a href="{{ route('contact') }}" class="hover:text-white transition">Contact</a></li>
-                        <li><a href="{{ route('privacy') }}" class="hover:text-white transition">Privacy</a></li>
-                        <li><a href="{{ route('terms') }}" class="hover:text-white transition">Terms</a></li>
-                        <li><a href="{{ route('blog.index') }}" class="hover:text-white transition">Blog</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold mb-4">Contact</h4>
-                    <p class="text-gray-300 text-sm mb-2">📞 +1 (800) 555-FLOW</p>
-                    <p class="text-gray-300 text-sm">📧 info@stayflow.com</p>
-                </div>
-                <div>
-                    <h4 class="font-bold mb-4">Follow Us</h4>
-                    <div class="flex gap-4 text-xl">
-                        <a href="#" class="hover:text-cyan-400 transition">📱</a>
-                        <a href="#" class="hover:text-cyan-400 transition">🐦</a>
-                        <a href="#" class="hover:text-cyan-400 transition">📷</a>
-                    </div>
-                </div>
-            </div>
-            <div class="border-t border-gray-800 pt-8 text-center text-gray-400">
-                <p>&copy; 2026 stayFlow. All rights reserved. | Luxury Hotel Management Platform</p>
-            </div>
-        </div>
-    </section>
 </div>
 @endsection
