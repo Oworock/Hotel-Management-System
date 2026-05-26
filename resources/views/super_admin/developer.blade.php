@@ -91,7 +91,7 @@
                                             <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ $token->user->name }}</span>
                                             <span class="badge badge-info" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">{{ $token->user->role }}</span>
                                         </td>
-                                        <td><code style="font-family: monospace; font-size: 0.8rem; background: rgba(0,0,0,0.03); padding: 0.2rem 0.4rem; border-radius: 4px;">{{ substr($token->token, 0, 12) }}...{{ substr($token->token, -4) }}</code></td>
+                                        <td><code style="font-family: monospace; font-size: 0.8rem; background: rgba(0,0,0,0.03); padding: 0.2rem 0.4rem; border-radius: 4px;">Hash {{ substr($token->token, 0, 8) }}...{{ substr($token->token, -4) }}</code></td>
                                         <td>
                                             <span style="font-size: 0.85rem; color: var(--text-secondary);">
                                                 {{ $token->last_used_at ? $token->last_used_at->diffForHumans() : 'Never used' }}
@@ -173,7 +173,7 @@
                                         <td>
                                             <div style="display: flex; align-items: center; gap: 0.5rem;">
                                                 <code style="font-family: monospace; font-size: 0.8rem; background: rgba(0,0,0,0.03); padding: 0.2rem 0.4rem;" id="webhook-sec-{{ $webhook->id }}">••••••••••••••••</code>
-                                                <button class="btn btn-outline" onclick="toggleRevealSecret('webhook-sec-{{ $webhook->id }}', '{{ $webhook->secret }}')" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; border: none; background: none;">
+                                                <button class="btn btn-outline" onclick="toggleRevealSecret('webhook-sec-{{ $webhook->id }}', @js($webhook->secret))" style="padding: 0.2rem 0.4rem; font-size: 0.7rem; border: none; background: none;">
                                                     <i class="fa-solid fa-eye" id="webhook-sec-{{ $webhook->id }}-icon"></i>
                                                 </button>
                                             </div>

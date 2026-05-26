@@ -17,6 +17,25 @@ class HotelManagementSystemTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function validGuestProfilePayload(): array
+    {
+        return [
+            'phone_country_code' => '+234',
+            'phone' => '8012345678',
+            'date_of_birth' => '1990-01-15',
+            'nationality' => 'Nigerian',
+            'country_of_residence' => 'Nigeria',
+            'address_line1' => '12 Victoria Island Road',
+            'city' => 'Lagos',
+            'id_type' => 'passport',
+            'id_number' => 'A12345678',
+            'emergency_contact_name' => 'Mary Customer',
+            'emergency_contact_relationship' => 'Sister',
+            'emergency_contact_phone_country_code' => '+234',
+            'emergency_contact_phone' => '8023456789',
+        ];
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -326,7 +345,7 @@ class HotelManagementSystemTest extends TestCase
             'check_in_date' => Carbon::today()->format('Y-m-d'),
             'check_out_date' => Carbon::tomorrow()->format('Y-m-d'), // 1 night stay
             'guests' => 1,
-        ]);
+        ] + $this->validGuestProfilePayload());
 
         $booking = Booking::where('customer_id', $customer->id)->first();
         $this->assertNotNull($booking);
@@ -790,4 +809,3 @@ class HotelManagementSystemTest extends TestCase
         }
     }
 }
-

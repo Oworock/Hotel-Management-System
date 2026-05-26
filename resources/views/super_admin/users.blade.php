@@ -77,7 +77,7 @@
                             {{ $user->created_at->format('M d, Y') }}
                         </td>
                         <td style="text-align: right;">
-                            <button type="button" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; margin-right: 0.25rem;" onclick="openEditModal({{ json_encode(['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role, 'functions' => $user->functions ?? [], 'hotel_id' => $user->hotel_id]) }})">
+                            <button type="button" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; margin-right: 0.25rem;" onclick="openEditModal({{ json_encode(['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'phone' => $user->phone, 'role' => $user->role, 'functions' => $user->functions ?? [], 'hotel_id' => $user->hotel_id]) }})">
                                 <i class="fa-solid fa-user-pen" style="color: var(--primary);"></i> Edit
                             </button>
                             @if($user->id !== auth()->user()->id)
@@ -132,6 +132,8 @@
                 <label for="modal-email" class="form-label">Email Address</label>
                 <input type="email" name="email" id="modal-email" class="form-control" required placeholder="john@hotel.com">
             </div>
+
+            @include('partials.phone-input', ['field' => 'phone', 'label' => 'Mobile Number'])
             
             <div class="form-group">
                 <label for="modal-password" class="form-label">Temporary Password</label>
@@ -249,6 +251,19 @@
                 <label for="edit-modal-email" class="form-label">Email Address</label>
                 <input type="email" name="email" id="edit-modal-email" class="form-control" required placeholder="john@hotel.com">
             </div>
+
+            <div class="form-group">
+                <label class="form-label">Mobile Number</label>
+                <div style="display:grid;grid-template-columns:minmax(130px,0.55fr) minmax(0,1fr);gap:0.65rem;">
+                    <select name="phone_country_code" id="edit-phone-country-code" class="form-control form-select">
+                        @foreach(\App\Support\PhoneNumber::countries() as $code => $country)
+                            <option value="{{ $code }}">{{ \App\Support\PhoneNumber::countrySelectLabel($code, $country) }}</option>
+                        @endforeach
+                    </select>
+                    <input type="tel" name="phone" id="edit-phone" class="form-control" placeholder="8012345678" inputmode="tel">
+                </div>
+                <small style="display:block;margin-top:0.35rem;color:var(--text-secondary);font-size:0.75rem;">Enter the local mobile number only. A leading 0 will be removed automatically.</small>
+            </div>
             
             <div class="form-group">
                 <label for="edit-modal-password" class="form-label">New Password</label>
@@ -355,6 +370,8 @@
     function openModal() {
         document.getElementById('modal-name').value = '';
         document.getElementById('modal-email').value = '';
+        const createPhoneInput = document.querySelector('#createUserModal input[name="phone"]');
+        if (createPhoneInput) createPhoneInput.value = '';
         document.getElementById('modal-password').value = '';
         document.getElementById('modal-role').value = 'receptionist';
         document.getElementById('modal-role-hidden').value = 'receptionist';
@@ -394,6 +411,7 @@
         editForm.action = `/super-admin/users/${user.id}/update`;
         editNameInput.value = user.name;
         editEmailInput.value = user.email;
+        setPhoneFields('edit-phone-country-code', 'edit-phone', user.phone || '');
         document.getElementById('edit-modal-password').value = '';
         if (document.getElementById('edit-modal-hotel')) {
             document.getElementById('edit-modal-hotel').value = user.hotel_id || '';
@@ -467,6 +485,26 @@
             customInput.required = false;
             hiddenInput.value = select.value;
         }
+    }
+
+    function setPhoneFields(countryId, phoneId, phone) {
+        const countries = @json(array_keys(\App\Support\PhoneNumber::countries()));
+        const countrySelect = document.getElementById(countryId);
+        const phoneInput = document.getElementById(phoneId);
+        const digits = String(phone || '').replace(/\D/g, '');
+        let selected = '+234';
+        let national = digits.replace(/^0+/, '');
+
+        countries.forEach(code => {
+            const codeDigits = code.replace(/\D/g, '');
+            if (digits.startsWith(codeDigits)) {
+                selected = code;
+                national = digits.slice(codeDigits.length);
+            }
+        });
+
+        countrySelect.value = selected;
+        phoneInput.value = national;
     }
 
     document.getElementById('modal-custom-role').addEventListener('input', function() {

@@ -1,7 +1,7 @@
 <footer class="luxury-site-footer">
     <div class="luxury-footer-brand">{{ \App\Models\Setting::getValue('hotel_name', 'Aetheria Grand Hotel') }}</div>
     <div class="luxury-footer-grid">
-        <p>{!! \App\Models\Setting::getValue('global_footer', \App\Models\Setting::getValue('welcome_description', 'Private service, elegant rooms, and memorable arrivals.')) !!}</p>
+        <p>{!! \App\Support\HtmlSanitizer::clean(\App\Models\Setting::getValue('global_footer', \App\Models\Setting::getValue('welcome_description', 'Private service, elegant rooms, and memorable arrivals.'))) !!}</p>
         <nav>
             <a href="/rooms">Suites</a>
             <a href="/services">Dining & Spa</a>

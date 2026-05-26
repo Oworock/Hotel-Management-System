@@ -19,7 +19,7 @@
                 @if($logoType === 'image' && !empty($logoImage))
                     <img src="{{ $logoImage }}" alt="{{ \App\Models\Setting::getValue('hotel_name', 'Aetheria') }}" style="max-height: 50px; object-fit: contain; display: inline-block;">
                 @else
-                    {!! \App\Models\Setting::getValue('logo_text', '<i class="fa-solid fa-hotel"></i> Aetheria') !!}
+                    {!! \App\Support\HtmlSanitizer::clean(\App\Models\Setting::getValue('logo_text', '<i class="fa-solid fa-hotel"></i> Aetheria')) !!}
                 @endif
             </a>
             <p style="color: var(--text-secondary);">Premium Hotel Management System</p>

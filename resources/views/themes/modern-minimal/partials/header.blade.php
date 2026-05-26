@@ -9,7 +9,7 @@
         @if($logoType === 'image' && $logoImage)
             <img src="{{ $logoImage }}" alt="{{ $hotelName }}">
         @else
-            {!! \App\Models\Setting::getValue('logo_text', '<i class="fa-solid fa-hotel"></i> Aetheria') !!}
+            {!! \App\Support\HtmlSanitizer::clean(\App\Models\Setting::getValue('logo_text', '<i class="fa-solid fa-hotel"></i> Aetheria')) !!}
         @endif
     </a>
     <nav class="modern-site-nav" id="nav-menu">

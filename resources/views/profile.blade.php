@@ -28,6 +28,8 @@
             <input type="email" name="email" id="profile-email" class="form-control" value="{{ old('email', $user->email) }}" required placeholder="name@hotel.com">
         </div>
 
+        @include('partials.phone-input', ['field' => 'phone', 'label' => 'Mobile Number', 'value' => $user->phone, 'style' => 'margin-top: 1.25rem;'])
+
         <div style="margin: 2.5rem 0 1.5rem 0; border-top: 1px dashed var(--border-color); padding-top: 1.5rem;">
             <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Change Password</h3>
             <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.25rem;">Leave password fields blank if you do not wish to change your current password.</p>

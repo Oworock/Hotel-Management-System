@@ -120,6 +120,12 @@ class PluginController extends Controller
                 File::makeDirectory($tempExtractPath, 0755, true);
             }
 
+            if (!$this->zipEntriesAreSafe($zip)) {
+                $zip->close();
+                File::deleteDirectory($tempExtractPath);
+                return redirect()->back()->with('error', 'Invalid plugin zip: unsafe file paths detected.');
+            }
+
             $zip->extractTo($tempExtractPath);
             $zip->close();
 
@@ -146,6 +152,11 @@ class PluginController extends Controller
             }
 
             $pluginName = $metadata['name'];
+            if (!$this->isSafePluginName($pluginName)) {
+                File::deleteDirectory($tempExtractPath);
+                return redirect()->back()->with('error', 'Invalid plugin.json metadata: plugin name must contain only letters, numbers, dashes, and underscores.');
+            }
+
             $targetPath = base_path('plugins/' . $pluginName);
 
             // Clean up existing plugin directory if exists
@@ -278,6 +289,10 @@ SVG;
                 ->delete();
         }
 
+        if (!$this->isSafePluginName($plugin->name)) {
+            return redirect()->back()->with('error', 'Unsafe plugin name. Delete the plugin record manually after reviewing the database.');
+        }
+
         $targetPath = base_path('plugins/' . $plugin->name);
         if (!app()->environment('testing') && File::exists($targetPath)) {
             File::deleteDirectory($targetPath);
@@ -294,5 +309,27 @@ SVG;
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
 
         return redirect()->back()->with('success', "Plugin '{$plugin->name}' and all associated files deleted successfully.");
+    }
+
+    private function isSafePluginName(?string $name): bool
+    {
+        return is_string($name) && preg_match('/\A[A-Za-z0-9_-]+\z/', $name) === 1;
+    }
+
+    private function zipEntriesAreSafe(ZipArchive $zip): bool
+    {
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = $zip->getNameIndex($i);
+            if (!is_string($name) || $name === '') {
+                return false;
+            }
+
+            $normalized = str_replace('\\', '/', $name);
+            if (str_starts_with($normalized, '/') || preg_match('#(^|/)\.\.(?:/|$)#', $normalized)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

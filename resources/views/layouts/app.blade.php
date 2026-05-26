@@ -80,7 +80,7 @@
 
     @if($announcement = \App\Models\Setting::getValue('global_header'))
         <div class="announcement-bar" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; text-align: center; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; position: relative; z-index: 1000; box-shadow: var(--shadow-sm);">
-            <span>{!! $announcement !!}</span>
+            <span>{!! \App\Support\HtmlSanitizer::clean($announcement) !!}</span>
         </div>
     @endif
 
@@ -92,7 +92,7 @@
                     @if(\App\Models\Setting::getValue('logo_type', 'text') === 'image' && \App\Models\Setting::getValue('logo_image'))
                         <img src="{{ \App\Models\Setting::getValue('logo_image') }}" alt="Logo" style="max-height: 40px; width: auto; object-fit: contain;">
                     @else
-                        {!! \App\Models\Setting::getValue('logo_text', \App\Models\Setting::getValue('platform_logo', '<i class="fa-solid fa-hotel"></i> Aetheria')) !!}
+                        {!! \App\Support\HtmlSanitizer::clean(\App\Models\Setting::getValue('logo_text', \App\Models\Setting::getValue('platform_logo', '<i class="fa-solid fa-hotel"></i> Aetheria'))) !!}
                     @endif
                 </a>
                 <button class="theme-toggle" style="display: none;" id="sidebar-close" onclick="toggleSidebar()">
@@ -123,6 +123,13 @@
                             <i class="fa-solid fa-puzzle-piece"></i> Plugins
                         </a>
                     </li>
+                    @if(Route::has('notification_manager.index'))
+                        <li class="sidebar-menu-item {{ Route::is('notification_manager.*') ? 'active' : '' }}">
+                            <a href="{{ route('notification_manager.index') }}">
+                                <i class="fa-solid fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                    @endif
                     <li class="sidebar-menu-item {{ Route::is('super_admin.themes') ? 'active' : '' }}">
                         <a href="{{ route('super_admin.themes') }}">
                             <i class="fa-solid fa-palette"></i> Themes
@@ -187,6 +194,44 @@
                             </a>
                         </li>
                     @endif
+                    @if(Route::has('admin.hr.dashboard'))
+                        <li class="sidebar-menu-header">HR Management</li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.dashboard') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.dashboard') }}">
+                                <i class="fa-solid fa-chart-pie"></i> HR Dashboard
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.employees*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.employees.index') }}">
+                                <i class="fa-solid fa-users"></i> Employees
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.departments*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.departments.index') }}">
+                                <i class="fa-solid fa-building"></i> Departments
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.attendance*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.attendance.index') }}">
+                                <i class="fa-solid fa-calendar-days"></i> Attendance
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.leaves*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.leaves.index') }}">
+                                <i class="fa-solid fa-umbrella"></i> Leaves
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.payroll*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.payroll.index') }}">
+                                <i class="fa-solid fa-money-bill"></i> Payroll
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.performance*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.performance.index') }}">
+                                <i class="fa-solid fa-star"></i> Performance
+                            </a>
+                        </li>
+                    @endif
                     @if(Route::has('admin.channel_manager.index'))
                         <li class="sidebar-menu-header">Channel Manager</li>
                         <li class="sidebar-menu-item {{ Route::is('admin.channel_manager.index') ? 'active' : '' }}">
@@ -242,6 +287,13 @@
                             <i class="fa-solid fa-gears"></i> Settings
                         </a>
                     </li>
+                    @if(Route::has('notification_manager.index'))
+                        <li class="sidebar-menu-item {{ Route::is('notification_manager.*') ? 'active' : '' }}">
+                            <a href="{{ route('notification_manager.index') }}">
+                                <i class="fa-solid fa-bell"></i> Notifications
+                            </a>
+                        </li>
+                    @endif
                     <li class="sidebar-menu-header">Website Content</li>
                     <li class="sidebar-menu-item {{ Route::is('admin.faqs') ? 'active' : '' }}">
                         <a href="{{ route('admin.faqs') }}"><i class="fa-solid fa-circle-question"></i> FAQs</a>
@@ -280,6 +332,44 @@
                         <li class="sidebar-menu-item {{ Route::is('admin.ecommerce.settings') ? 'active' : '' }}">
                             <a href="{{ route('admin.ecommerce.settings') }}">
                                 <i class="fa-solid fa-sliders"></i> Shop Settings
+                            </a>
+                        </li>
+                    @endif
+                    @if(Route::has('admin.hr.dashboard'))
+                        <li class="sidebar-menu-header">HR Management</li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.dashboard') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.dashboard') }}">
+                                <i class="fa-solid fa-chart-pie"></i> HR Dashboard
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.employees*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.employees.index') }}">
+                                <i class="fa-solid fa-users"></i> Employees
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.departments*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.departments.index') }}">
+                                <i class="fa-solid fa-building"></i> Departments
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.attendance*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.attendance.index') }}">
+                                <i class="fa-solid fa-calendar-days"></i> Attendance
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.leaves*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.leaves.index') }}">
+                                <i class="fa-solid fa-umbrella"></i> Leaves
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.payroll*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.payroll.index') }}">
+                                <i class="fa-solid fa-money-bill"></i> Payroll
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.performance*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.performance.index') }}">
+                                <i class="fa-solid fa-star"></i> Performance
                             </a>
                         </li>
                     @endif
@@ -328,6 +418,29 @@
                         <li class="sidebar-menu-item {{ Route::is('admin.ecommerce.settings') ? 'active' : '' }}">
                             <a href="{{ route('admin.ecommerce.settings') }}">
                                 <i class="fa-solid fa-sliders"></i> Shop Settings
+                            </a>
+                        </li>
+                    @endif
+                    @if(Route::has('admin.hr.staff.profile'))
+                        <li class="sidebar-menu-header">My HR Info</li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.staff.profile') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.staff.profile') }}">
+                                <i class="fa-solid fa-id-card"></i> My Profile
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.staff.leaves') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.staff.leaves') }}">
+                                <i class="fa-solid fa-umbrella"></i> My Leaves
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.staff.attendance') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.staff.attendance') }}">
+                                <i class="fa-solid fa-calendar-check"></i> My Attendance
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {{ Route::is('admin.hr.staff.payslips') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.staff.payslips') }}">
+                                <i class="fa-solid fa-receipt"></i> My Payslips
                             </a>
                         </li>
                     @endif
@@ -599,6 +712,29 @@
                         </div>
                     @endif
 
+                    @if(Route::has('notification_manager.inbox'))
+                        <div class="dashboard-notification-widget" id="dashboard-notification-widget" style="position:relative;">
+                            <button type="button" class="theme-toggle" id="dashboard-notification-toggle" aria-label="Notifications" style="position:relative;">
+                                <i class="fa-solid fa-bell"></i>
+                                <span id="dashboard-notification-count" style="display:none;position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--danger);color:#fff;font-size:0.68rem;font-weight:800;line-height:18px;text-align:center;box-shadow:0 0 0 2px var(--surface);"></span>
+                            </button>
+                            <div id="dashboard-notification-panel" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:min(360px,calc(100vw - 2rem));background:var(--surface);border:1px solid var(--border-color);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);z-index:1200;overflow:hidden;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.9rem 1rem;border-bottom:1px solid var(--border-color);">
+                                    <strong style="color:var(--text-primary);font-size:0.95rem;">Notifications</strong>
+                                    <button type="button" id="dashboard-notification-read" class="btn btn-outline" style="padding:0.35rem 0.6rem;font-size:0.75rem;">Mark read</button>
+                                </div>
+                                <div id="dashboard-notification-list" style="max-height:390px;overflow:auto;">
+                                    <div style="padding:1.2rem;color:var(--text-secondary);font-size:0.9rem;text-align:center;">Loading notifications...</div>
+                                </div>
+                                @if(Route::has('notification_manager.index') && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+                                    <a href="{{ route('notification_manager.index') }}" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1rem;border-top:1px solid var(--border-color);color:var(--primary);text-decoration:none;font-weight:700;font-size:0.85rem;">
+                                        <i class="fa-solid fa-sliders"></i> Manage Notifications
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Light/Dark Mode Switcher -->
                     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
                         <i class="fa-solid fa-moon" id="theme-icon"></i>
@@ -701,7 +837,7 @@
             </main>
             @if($footer = \App\Models\Setting::getValue('global_footer'))
                 <footer style="margin-top: auto; padding: 1.5rem; text-align: center; border-top: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-secondary);">
-                    {!! $footer !!}
+                    {!! \App\Support\HtmlSanitizer::clean($footer) !!}
                 </footer>
             @endif
         </div>
@@ -786,6 +922,170 @@
                 }
             });
         }
+
+        @if(Route::has('notification_manager.inbox'))
+            const notificationWidget = document.getElementById('dashboard-notification-widget');
+            const notificationToggle = document.getElementById('dashboard-notification-toggle');
+            const notificationPanel = document.getElementById('dashboard-notification-panel');
+            const notificationList = document.getElementById('dashboard-notification-list');
+            const notificationCount = document.getElementById('dashboard-notification-count');
+            const notificationRead = document.getElementById('dashboard-notification-read');
+            const notificationInboxUrl = "{{ route('notification_manager.inbox') }}";
+            const notificationReadUrl = "{{ route('notification_manager.inbox.read') }}";
+            const notificationCsrf = "{{ csrf_token() }}";
+            let lastNotificationId = Number(localStorage.getItem('lastDashboardNotificationId') || 0);
+            let lastUnreadCount = Number(localStorage.getItem('lastDashboardNotificationUnreadCount') || 0);
+            let notificationAudioReady = false;
+            let notificationAudioContext = null;
+
+            function primeNotificationAudio() {
+                if (notificationAudioReady) return;
+                try {
+                    notificationAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    notificationAudioReady = true;
+                } catch (e) {
+                    notificationAudioReady = false;
+                }
+            }
+
+            function playDashboardNotificationSound() {
+                try {
+                    if (!notificationAudioContext) {
+                        primeNotificationAudio();
+                    }
+                    if (!notificationAudioContext) return;
+
+                    if (notificationAudioContext.state === 'suspended') {
+                        notificationAudioContext.resume();
+                    }
+
+                    [0, 0.18, 0.38].forEach((offset, index) => {
+                        const oscillator = notificationAudioContext.createOscillator();
+                        const gain = notificationAudioContext.createGain();
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(index === 1 ? 1046 : 784, notificationAudioContext.currentTime + offset);
+                        gain.gain.setValueAtTime(0.0001, notificationAudioContext.currentTime + offset);
+                        gain.gain.exponentialRampToValueAtTime(0.22, notificationAudioContext.currentTime + offset + 0.025);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, notificationAudioContext.currentTime + offset + 0.16);
+                        oscillator.connect(gain);
+                        gain.connect(notificationAudioContext.destination);
+                        oscillator.start(notificationAudioContext.currentTime + offset);
+                        oscillator.stop(notificationAudioContext.currentTime + offset + 0.18);
+                    });
+                    if (navigator.vibrate) {
+                        navigator.vibrate([120, 70, 120]);
+                    }
+                } catch (e) {
+                    // Sound is best-effort and should never block dashboard usage.
+                }
+            }
+
+            function renderDashboardNotifications(items) {
+                if (!notificationList) return;
+                if (!items.length) {
+                    notificationList.innerHTML = '<div style="padding:1.2rem;color:var(--text-secondary);font-size:0.9rem;text-align:center;">No notifications yet.</div>';
+                    return;
+                }
+
+                notificationList.innerHTML = items.map(item => `
+                    <a href="${escapeDashboardNotification(item.open_url || '#')}" style="display:block;text-decoration:none;padding:0.95rem 1rem;border-bottom:1px solid var(--border-color);background:${item.read ? 'transparent' : 'var(--primary-glow)'};">
+                        <div style="display:flex;align-items:flex-start;gap:0.75rem;">
+                            <span style="width:2rem;height:2rem;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;background:var(--primary-glow);color:var(--primary);flex:0 0 auto;"><i class="fa-solid fa-bell"></i></span>
+                            <div style="min-width:0;">
+                                <div style="font-weight:750;color:var(--text-primary);font-size:0.9rem;line-height:1.35;">${escapeDashboardNotification(item.title)}</div>
+                                <div style="color:var(--text-secondary);font-size:0.8rem;line-height:1.45;margin-top:0.2rem;">${escapeDashboardNotification(item.message || '')}</div>
+                                <div style="color:var(--text-muted);font-size:0.72rem;margin-top:0.4rem;">${escapeDashboardNotification(item.created_at || '')}</div>
+                            </div>
+                        </div>
+                    </a>
+                `).join('');
+            }
+
+            function escapeDashboardNotification(value) {
+                return String(value)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            async function loadDashboardNotifications(allowSound = true) {
+                if (!notificationWidget) return;
+                try {
+                    const response = await fetch(notificationInboxUrl, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    const count = Number(data.unread_count || 0);
+                    const latestId = Number(data.latest_id || 0);
+
+                    if (count > 0) {
+                        notificationCount.style.display = 'inline-block';
+                        notificationCount.textContent = count > 99 ? '99+' : count;
+                    } else {
+                        notificationCount.style.display = 'none';
+                        notificationCount.textContent = '';
+                    }
+
+                    renderDashboardNotifications(data.notifications || []);
+
+                    if (allowSound && (latestId > lastNotificationId || count > lastUnreadCount)) {
+                        playDashboardNotificationSound();
+                    }
+                    if (latestId > lastNotificationId) {
+                        lastNotificationId = latestId;
+                        localStorage.setItem('lastDashboardNotificationId', String(latestId));
+                    }
+                    lastUnreadCount = count;
+                    localStorage.setItem('lastDashboardNotificationUnreadCount', String(count));
+                } catch (e) {
+                    // Keep polling quiet if the plugin is disabled or the session expires.
+                }
+            }
+
+            if (notificationToggle && notificationPanel) {
+                notificationToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    primeNotificationAudio();
+                    const isOpen = notificationPanel.style.display === 'block';
+                    notificationPanel.style.display = isOpen ? 'none' : 'block';
+                    if (!isOpen) loadDashboardNotifications(false);
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!notificationWidget.contains(e.target)) {
+                        notificationPanel.style.display = 'none';
+                    }
+                });
+            }
+
+            if (notificationRead) {
+                notificationRead.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    primeNotificationAudio();
+                    await fetch(notificationReadUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': notificationCsrf
+                        },
+                        credentials: 'same-origin'
+                    });
+                    loadDashboardNotifications(false);
+                    lastUnreadCount = 0;
+                    localStorage.setItem('lastDashboardNotificationUnreadCount', '0');
+                });
+            }
+
+            window.addEventListener('click', primeNotificationAudio, { once: true });
+            window.addEventListener('keydown', primeNotificationAudio, { once: true });
+            window.addEventListener('mousemove', primeNotificationAudio, { once: true });
+            loadDashboardNotifications(false);
+            setInterval(() => loadDashboardNotifications(true), 15000);
+        @endif
     </script>
     @yield('scripts')
 </body>

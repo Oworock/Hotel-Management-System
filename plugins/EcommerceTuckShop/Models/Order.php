@@ -17,6 +17,9 @@ class Order extends Model
     protected function casts(): array
     {
         return [
+            'customer_name' => 'encrypted',
+            'customer_email' => 'encrypted',
+            'customer_phone' => 'encrypted',
             'total_price' => 'decimal:2',
         ];
     }

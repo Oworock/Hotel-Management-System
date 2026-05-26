@@ -79,10 +79,7 @@
                     <input type="email" name="contact_email" id="contact_email" class="form-control" value="{{ $settings['contact_email'] }}" required>
                 </div>
                 
-                <div class="form-group">
-                    <label for="contact_phone" class="form-label">Public Phone Number</label>
-                    <input type="text" name="contact_phone" id="contact_phone" class="form-control" value="{{ $settings['contact_phone'] }}" required>
-                </div>
+                @include('partials.phone-input', ['field' => 'contact_phone', 'countryField' => 'contact_phone_country_code', 'label' => 'Public Phone Number', 'value' => $settings['contact_phone'], 'required' => true])
             </div>
 
             <div class="form-group">
@@ -402,10 +399,7 @@
             <div style="margin-top: 2rem; border-top: 1px dashed var(--border-color); padding-top: 1.5rem;">
                 <h4 style="margin-bottom: 1rem; color: var(--text-primary);"><i class="fa-solid fa-paper-plane"></i> Dispatch Test SMS</h4>
                 <div class="form-row" style="align-items: flex-end;">
-                    <div class="form-group">
-                        <label for="test_phone_number" class="form-label">Test Recipient Phone Number</label>
-                        <input type="text" name="phone_number" id="test_phone_number" class="form-control" placeholder="+1234567890">
-                    </div>
+                    @include('partials.phone-input', ['field' => 'phone_number', 'countryField' => 'phone_number_country_code', 'label' => 'Test Recipient Phone Number'])
                     <div class="form-group">
                         <label for="test_sms_message" class="form-label">Test Message Content</label>
                         <input type="text" name="message" id="test_sms_message" class="form-control" placeholder="Aetheria System Test SMS.">

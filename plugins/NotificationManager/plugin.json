@@ -1,0 +1,6 @@
+{
+  "name": "NotificationManager",
+  "version": "1.0.0",
+  "description": "Standalone notification automation plugin for booking, check-in, checkout, staff, SMS, email, templates, recipients, and delivery audit logs.",
+  "service_provider": "Plugins\\NotificationManager\\NotificationManagerServiceProvider"
+}

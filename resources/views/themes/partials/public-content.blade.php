@@ -361,7 +361,7 @@
 
     @case('page')
         <article class="page-card content-page">
-            {!! $page->content !!}
+            {!! \App\Support\HtmlSanitizer::clean($page->content) !!}
         </article>
         @break
 

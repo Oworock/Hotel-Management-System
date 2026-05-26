@@ -17,7 +17,7 @@
                 <h1 class="text-4xl font-bold text-gray-900 mb-6">{{ $post->title }}</h1>
                 
                 <div class="prose prose-lg max-w-none text-gray-700 mb-8">
-                    {!! $post->content !!}
+                    {!! \App\Support\HtmlSanitizer::clean($post->content) !!}
                 </div>
                 
                 <div class="border-t pt-8">

@@ -2,7 +2,7 @@
     <div class="modern-footer-grid">
         <div>
             <strong>{{ \App\Models\Setting::getValue('hotel_name', 'Aetheria Grand Hotel') }}</strong>
-            <p>{!! \App\Models\Setting::getValue('global_footer', \App\Models\Setting::getValue('welcome_description', 'A refined stay with thoughtful service and simple booking.')) !!}</p>
+            <p>{!! \App\Support\HtmlSanitizer::clean(\App\Models\Setting::getValue('global_footer', \App\Models\Setting::getValue('welcome_description', 'A refined stay with thoughtful service and simple booking.'))) !!}</p>
         </div>
         <nav>
             <a href="/rooms">Rooms</a>

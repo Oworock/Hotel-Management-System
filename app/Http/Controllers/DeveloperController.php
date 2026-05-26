@@ -46,7 +46,7 @@ class DeveloperController extends Controller
         ApiToken::create([
             'name' => $request->name,
             'user_id' => $request->user_id,
-            'token' => $plainToken,
+            'token' => ApiToken::hashToken($plainToken),
         ]);
 
         return redirect()->back()->with('new_api_key', [

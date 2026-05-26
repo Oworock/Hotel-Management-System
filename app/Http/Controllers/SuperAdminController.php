@@ -8,6 +8,7 @@ use App\Models\Page;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use App\Support\PhoneNumber;
 
 class SuperAdminController extends Controller
 {
@@ -124,6 +125,7 @@ class SuperAdminController extends Controller
             'check_out_time' => 'required|string',
             'contact_email' => 'required|email|max:255',
             'contact_phone' => 'required|string|max:50',
+            'contact_phone_country_code' => 'nullable|string|max:8',
             'physical_address' => 'nullable|string|max:1000',
             
             'primary_color' => 'nullable|string|max:50',
@@ -183,6 +185,9 @@ class SuperAdminController extends Controller
             'promo_popup_image' => 'nullable|string|max:500',
             'promo_popup_coupon' => 'nullable|string|max:50',
         ]);
+
+        $data['contact_phone'] = PhoneNumber::normalize($request->input('contact_phone_country_code'), $request->input('contact_phone'));
+        unset($data['contact_phone_country_code']);
 
         if (!isset($data['sms_gateway_provider'])) {
             $data['sms_gateway_provider'] = Setting::getValue('sms_gateway_provider', 'disabled');
@@ -284,6 +289,8 @@ class SuperAdminController extends Controller
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'phone_country_code' => ['nullable', 'string', 'max:8'],
+            'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', Rules\Password::defaults()],
             'role' => ['required', 'string', 'max:255'],
             'functions' => ['nullable', 'array'],
@@ -298,6 +305,7 @@ class SuperAdminController extends Controller
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->phone = PhoneNumber::normalize($request->input('phone_country_code'), $request->input('phone'));
         $user->password = Hash::make($request->password);
         $user->role = $request->role;
         $user->functions = $request->input('functions', []);
@@ -329,6 +337,8 @@ class SuperAdminController extends Controller
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone_country_code' => ['nullable', 'string', 'max:8'],
+            'phone' => ['nullable', 'string', 'max:30'],
             'role' => ['required', 'string', 'max:255'],
             'password' => ['nullable', Rules\Password::defaults()],
             'functions' => ['nullable', 'array'],
@@ -342,6 +352,7 @@ class SuperAdminController extends Controller
 
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->phone = PhoneNumber::normalize($request->input('phone_country_code'), $request->input('phone'));
         $user->role = $request->role;
         $user->functions = $request->input('functions', []);
 
@@ -362,10 +373,14 @@ class SuperAdminController extends Controller
     {
         $request->validate([
             'phone_number' => 'required|string',
+            'phone_number_country_code' => 'nullable|string|max:8',
             'message' => 'required|string',
         ]);
 
-        $result = \App\Services\SmsService::send($request->phone_number, $request->message);
+        $result = \App\Services\SmsService::send(
+            PhoneNumber::normalize($request->input('phone_number_country_code'), $request->input('phone_number')),
+            $request->message
+        );
 
         if ($result['success']) {
             return redirect()->back()->with('success', 'Test SMS sent successfully: ' . $result['message']);

@@ -26,8 +26,15 @@ class ApiTokenAuthenticate
             ], 401);
         }
 
-        $tokenStr = substr($header, 7);
-        $token = ApiToken::where('token', $tokenStr)->first();
+        $tokenStr = trim(substr($header, 7));
+        $token = ApiToken::where('token', ApiToken::hashToken($tokenStr))->first();
+
+        if (!$token) {
+            $token = ApiToken::where('token', $tokenStr)->first();
+            if ($token) {
+                $token->update(['token' => ApiToken::hashToken($tokenStr)]);
+            }
+        }
 
         if (!$token) {
             return response()->json([

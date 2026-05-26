@@ -10,7 +10,35 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'status', 'phone', 'nationality', 'loyalty_points', 'is_blacklisted', 'functions', 'prefer_dark_mode', 'preferred_theme'])]
+#[Fillable([
+    'name',
+    'email',
+    'password',
+    'role',
+    'status',
+    'phone',
+    'nationality',
+    'title',
+    'gender',
+    'date_of_birth',
+    'country_of_residence',
+    'address_line1',
+    'address_line2',
+    'city',
+    'state',
+    'postal_code',
+    'id_type',
+    'id_number',
+    'emergency_contact_name',
+    'emergency_contact_relationship',
+    'emergency_contact_phone',
+    'marketing_consent',
+    'loyalty_points',
+    'is_blacklisted',
+    'functions',
+    'prefer_dark_mode',
+    'preferred_theme',
+])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -117,6 +145,20 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'phone' => 'encrypted',
+            'nationality' => 'encrypted',
+            'date_of_birth' => 'encrypted',
+            'country_of_residence' => 'encrypted',
+            'address_line1' => 'encrypted',
+            'address_line2' => 'encrypted',
+            'city' => 'encrypted',
+            'state' => 'encrypted',
+            'postal_code' => 'encrypted',
+            'id_number' => 'encrypted',
+            'emergency_contact_name' => 'encrypted',
+            'emergency_contact_relationship' => 'encrypted',
+            'emergency_contact_phone' => 'encrypted',
+            'marketing_consent' => 'boolean',
             'is_blacklisted' => 'boolean',
             'loyalty_points' => 'integer',
             'functions' => 'array',

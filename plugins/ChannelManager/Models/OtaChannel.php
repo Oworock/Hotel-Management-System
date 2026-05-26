@@ -11,6 +11,8 @@ class OtaChannel extends Model
     protected function casts(): array
     {
         return [
+            'api_key' => 'encrypted',
+            'api_secret' => 'encrypted',
             'is_connected' => 'boolean',
         ];
     }

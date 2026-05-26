@@ -49,6 +49,9 @@
                                 <td>
                                     <div style="font-weight: 600;">{{ $staff->name }}</div>
                                     <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ $staff->email }}</div>
+                                    @if($staff->phone)
+                                        <div style="font-size: 0.78rem; color: var(--text-muted);">{{ $staff->phone }}</div>
+                                    @endif
                                 </td>
                                 <td>
                                     <span class="badge badge-{{ $staff->status === 'active' ? 'success' : 'danger' }}">
@@ -182,6 +185,8 @@
                 <input type="email" name="email" class="form-control" placeholder="Enter employee email" required autocomplete="email">
             </div>
 
+            @include('partials.phone-input', ['field' => 'phone', 'label' => 'Mobile Number', 'style' => 'margin-bottom: 1rem;'])
+
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="form-label">Password</label>
                 <input type="password" name="password" class="form-control" placeholder="Enter password (min. 8 chars)" required autocomplete="new-password">
@@ -213,6 +218,18 @@
             <div class="form-group" style="margin-bottom: 1rem;">
                 <label class="form-label">Email Address</label>
                 <input type="email" name="email" id="edit-email" class="form-control" required autocomplete="email">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Mobile Number</label>
+                <div style="display:grid;grid-template-columns:minmax(130px,0.55fr) minmax(0,1fr);gap:0.65rem;">
+                    <select name="phone_country_code" id="edit-phone-country-code" class="form-control form-select">
+                        @foreach(\App\Support\PhoneNumber::countries() as $code => $country)
+                            <option value="{{ $code }}">{{ \App\Support\PhoneNumber::countrySelectLabel($code, $country) }}</option>
+                        @endforeach
+                    </select>
+                    <input type="tel" name="phone" id="edit-phone" class="form-control" placeholder="8012345678" inputmode="tel">
+                </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -271,12 +288,33 @@
     function openEditModal(staff) {
         document.getElementById('edit-name').value = staff.name;
         document.getElementById('edit-email').value = staff.email;
+        setPhoneFields('edit-phone-country-code', 'edit-phone', staff.phone || '');
         
         // Dynamic form action
         const actionUrl = `/admin/users/${staff.id}/update`;
         document.getElementById('edit-form').setAttribute('action', actionUrl);
         
         toggleEditModal(true);
+    }
+
+    function setPhoneFields(countryId, phoneId, phone) {
+        const countries = @json(array_keys(\App\Support\PhoneNumber::countries()));
+        const countrySelect = document.getElementById(countryId);
+        const phoneInput = document.getElementById(phoneId);
+        const digits = String(phone || '').replace(/\D/g, '');
+        let selected = '+234';
+        let national = digits.replace(/^0+/, '');
+
+        countries.forEach(code => {
+            const codeDigits = code.replace(/\D/g, '');
+            if (digits.startsWith(codeDigits)) {
+                selected = code;
+                national = digits.slice(codeDigits.length);
+            }
+        });
+
+        countrySelect.value = selected;
+        phoneInput.value = national;
     }
 </script>
 

@@ -105,6 +105,25 @@ class AdvancedMvpTest extends TestCase
         parent::tearDown();
     }
 
+    protected function validGuestProfilePayload(): array
+    {
+        return [
+            'phone_country_code' => '+234',
+            'phone' => '8012345678',
+            'date_of_birth' => '1990-01-15',
+            'nationality' => 'Nigerian',
+            'country_of_residence' => 'Nigeria',
+            'address_line1' => '12 Victoria Island Road',
+            'city' => 'Lagos',
+            'id_type' => 'passport',
+            'id_number' => 'A12345678',
+            'emergency_contact_name' => 'Mary Guest',
+            'emergency_contact_relationship' => 'Sister',
+            'emergency_contact_phone_country_code' => '+234',
+            'emergency_contact_phone' => '8023456789',
+        ];
+    }
+
     /**
      * Test user impersonation.
      */
@@ -247,12 +266,14 @@ class AdvancedMvpTest extends TestCase
         
         // Tax rate is 12%, subtotal 30.00, total = 33.60
         $this->assertDatabaseHas('orders', [
-            'customer_name' => 'Walk-in Buyer',
             'total_price' => 33.60,
             'payment_method' => 'card',
             'payment_status' => 'paid',
             'status' => 'pending',
         ]);
+        $order = Order::first();
+        $this->assertSame('Walk-in Buyer', $order->customer_name);
+        $this->assertNotSame('Walk-in Buyer', $order->getRawOriginal('customer_name'));
 
         // Verify cart is cleared
         $this->assertNull(session()->get('cart'));
@@ -301,12 +322,14 @@ class AdvancedMvpTest extends TestCase
         
         // Tax = 1.08, total = 10.08
         $this->assertDatabaseHas('orders', [
-            'customer_name' => 'Jane Guest',
             'booking_id' => $booking->id,
             'total_price' => 10.08,
             'payment_method' => 'room_charge',
             'payment_status' => 'unpaid',
         ]);
+        $order = Order::first();
+        $this->assertSame('Jane Guest', $order->customer_name);
+        $this->assertNotSame('Jane Guest', $order->getRawOriginal('customer_name'));
 
         // 4. Verify booking total price incremented by 10.08
         $this->assertEquals(234.08, $booking->fresh()->total_price);
@@ -334,7 +357,7 @@ class AdvancedMvpTest extends TestCase
             'check_in_date' => Carbon::today()->toDateString(),
             'check_out_date' => Carbon::tomorrow()->toDateString(),
             'redeem_loyalty' => '1',
-        ]);
+        ] + $this->validGuestProfilePayload());
 
         // Redirects to payment page
         $booking = Booking::orderBy('id', 'desc')->first();
@@ -380,7 +403,7 @@ class AdvancedMvpTest extends TestCase
             'check_in_date' => Carbon::today()->toDateString(),
             'check_out_date' => Carbon::tomorrow()->toDateString(),
             'addons' => ['airport_shuttle', 'gourmet_breakfast'],
-        ]);
+        ] + $this->validGuestProfilePayload());
 
         $booking = Booking::orderBy('id', 'desc')->first();
         $response->assertRedirect("/customer/payment/{$booking->id}");
@@ -783,11 +806,13 @@ class AdvancedMvpTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('orders', [
-            'customer_name' => 'John Custom',
             'total_price' => 67.50,
             'payment_method' => 'card',
             'payment_status' => 'paid',
         ]);
+        $order = Order::first();
+        $this->assertSame('John Custom', $order->customer_name);
+        $this->assertNotSame('John Custom', $order->getRawOriginal('customer_name'));
     }
 
     /**
@@ -840,4 +865,3 @@ class AdvancedMvpTest extends TestCase
         \Illuminate\Support\Facades\Artisan::call('migrate');
     }
 }
-

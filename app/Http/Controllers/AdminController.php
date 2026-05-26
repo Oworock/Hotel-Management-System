@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Setting;
 use App\Models\HeroSlide;
 use App\Models\Amenity;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -653,12 +654,15 @@ class AdminController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'phone_country_code' => ['nullable', 'string', 'max:8'],
+            'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', \Illuminate\Validation\Rules\Password::defaults()],
         ]);
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => PhoneNumber::normalize($request->input('phone_country_code'), $request->input('phone')),
             'password' => \Illuminate\Support\Facades\Hash::make($request->password),
             'role' => 'staff',
             'status' => 'active',
@@ -680,11 +684,14 @@ class AdminController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone_country_code' => ['nullable', 'string', 'max:8'],
+            'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['nullable', \Illuminate\Validation\Rules\Password::defaults()],
         ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->phone = PhoneNumber::normalize($request->input('phone_country_code'), $request->input('phone'));
 
         if ($request->filled('password')) {
             $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
@@ -763,6 +770,7 @@ class AdminController extends Controller
             'check_out_time' => 'required|string',
             'contact_email' => 'required|email|max:255',
             'contact_phone' => 'required|string|max:50',
+            'contact_phone_country_code' => 'nullable|string|max:8',
             'physical_address' => 'nullable|string|max:1000',
             'map_address' => 'nullable|string',
             
@@ -815,6 +823,8 @@ class AdminController extends Controller
 
         $data = $request->validate($rules);
         $data = $this->normalizeCustomSmsSettings($request, $data);
+        $data['contact_phone'] = PhoneNumber::normalize($request->input('contact_phone_country_code'), $request->input('contact_phone'));
+        unset($data['contact_phone_country_code']);
 
         if ($isSuper && !array_key_exists('active_payment_gateway', $data)) {
             $data['active_payment_gateway'] = Setting::getValue('active_payment_gateway', 'disabled');

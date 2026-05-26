@@ -33,6 +33,112 @@
                 </select>
             </div>
 
+            @php($guest = auth()->user())
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color);">
+                <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem;"><i class="fa-solid fa-id-card" style="color: var(--primary);"></i> Guest Stay Profile</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6; margin-bottom: 1rem;">Complete these details once so reception can prepare your arrival, verify your identity, and contact someone in an emergency.</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="title" class="form-label">Title</label>
+                        <select name="title" id="title" class="form-control form-select">
+                            <option value="">Select title</option>
+                            @foreach(['Mr', 'Mrs', 'Ms', 'Miss', 'Dr', 'Prof'] as $title)
+                                <option value="{{ $title }}" {{ old('title', $guest->title) === $title ? 'selected' : '' }}>{{ $title }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="gender" class="form-label">Gender</label>
+                        <select name="gender" id="gender" class="form-control form-select">
+                            <option value="">Prefer not to say</option>
+                            @foreach(['female' => 'Female', 'male' => 'Male', 'non_binary' => 'Non-binary', 'other' => 'Other'] as $value => $label)
+                                <option value="{{ $value }}" {{ old('gender', $guest->gender) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date_of_birth" class="form-label">Date of Birth</label>
+                        <input type="date" name="date_of_birth" id="date_of_birth" class="form-control" value="{{ old('date_of_birth', $guest->date_of_birth) }}" max="{{ date('Y-m-d', strtotime('-1 day')) }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nationality" class="form-label">Nationality</label>
+                        <input type="text" name="nationality" id="nationality" class="form-control" value="{{ old('nationality', $guest->nationality) }}" placeholder="e.g. Nigerian" required>
+                    </div>
+                </div>
+
+                @include('partials.phone-input', ['field' => 'phone', 'label' => 'Mobile Number', 'value' => old('phone', $guest->phone), 'required' => true])
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="country_of_residence" class="form-label">Country of Residence</label>
+                        <input type="text" name="country_of_residence" id="country_of_residence" class="form-control" value="{{ old('country_of_residence', $guest->country_of_residence) }}" placeholder="Country where you live" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="city" class="form-label">City</label>
+                        <input type="text" name="city" id="city" class="form-control" value="{{ old('city', $guest->city) }}" placeholder="City" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="address_line1" class="form-label">Residential Address</label>
+                    <input type="text" name="address_line1" id="address_line1" class="form-control" value="{{ old('address_line1', $guest->address_line1) }}" placeholder="Street address" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="address_line2" class="form-label">Apartment / Suite</label>
+                        <input type="text" name="address_line2" id="address_line2" class="form-control" value="{{ old('address_line2', $guest->address_line2) }}" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label for="state" class="form-label">State / Province</label>
+                        <input type="text" name="state" id="state" class="form-control" value="{{ old('state', $guest->state) }}" placeholder="Optional">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="postal_code" class="form-label">Postal Code</label>
+                        <input type="text" name="postal_code" id="postal_code" class="form-control" value="{{ old('postal_code', $guest->postal_code) }}" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_type" class="form-label">Identification Type</label>
+                        <select name="id_type" id="id_type" class="form-control form-select" required>
+                            <option value="">Select ID type</option>
+                            @foreach(['passport' => 'Passport', 'national_id' => 'National ID', 'drivers_license' => 'Driver License', 'residence_permit' => 'Residence Permit', 'voter_card' => 'Voter Card', 'other' => 'Other Government ID'] as $value => $label)
+                                <option value="{{ $value }}" {{ old('id_type', $guest->id_type) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_number" class="form-label">Identification Number</label>
+                    <input type="text" name="id_number" id="id_number" class="form-control" value="{{ old('id_number', $guest->id_number) }}" placeholder="Passport, national ID, or other accepted ID number" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="emergency_contact_name" class="form-label">Emergency Contact Name</label>
+                        <input type="text" name="emergency_contact_name" id="emergency_contact_name" class="form-control" value="{{ old('emergency_contact_name', $guest->emergency_contact_name) }}" placeholder="Full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="emergency_contact_relationship" class="form-label">Relationship</label>
+                        <input type="text" name="emergency_contact_relationship" id="emergency_contact_relationship" class="form-control" value="{{ old('emergency_contact_relationship', $guest->emergency_contact_relationship) }}" placeholder="e.g. Spouse, Parent, Friend" required>
+                    </div>
+                </div>
+
+                @include('partials.phone-input', ['field' => 'emergency_contact_phone', 'label' => 'Emergency Contact Phone', 'value' => old('emergency_contact_phone', $guest->emergency_contact_phone), 'required' => true])
+
+                <label style="display:flex;align-items:flex-start;gap:0.65rem;margin-top:0.5rem;color:var(--text-secondary);font-size:0.86rem;line-height:1.5;">
+                    <input type="checkbox" name="marketing_consent" value="1" {{ old('marketing_consent', $guest->marketing_consent) ? 'checked' : '' }} style="margin-top:0.2rem;">
+                    <span>Send me stay updates, direct-booking offers, and hotel news. I can opt out later.</span>
+                </label>
+            </div>
+
             <div class="form-group" style="margin-top: 1.25rem;">
                 <label for="coupon_code" class="form-label">Promo Coupon Code</label>
                 <div style="display: flex; gap: 0.5rem;">

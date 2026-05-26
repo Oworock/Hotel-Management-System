@@ -119,9 +119,12 @@ class ChannelManagerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('ota_channels', [
             'id' => $channel->id,
-            'api_key' => 'booking_api_key_123',
             'is_connected' => true,
         ]);
+        $channel->refresh();
+        $this->assertSame('booking_api_key_123', $channel->api_key);
+        $this->assertSame('booking_secret_xyz', $channel->api_secret);
+        $this->assertNotSame('booking_api_key_123', $channel->getRawOriginal('api_key'));
 
         $this->assertDatabaseHas('channel_sync_logs', [
             'channel_name' => 'Booking.com',

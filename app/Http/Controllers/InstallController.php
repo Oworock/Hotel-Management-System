@@ -58,7 +58,7 @@ class InstallController extends Controller
             'db_database_sqlite' => 'required_if:db_connection,sqlite|string',
             'db_host' => 'required_if:db_connection,mysql|string',
             'db_port' => 'required_if:db_connection,mysql|string',
-            'db_database_mysql' => 'required_if:db_connection,mysql|string',
+            'db_database_mysql' => ['required_if:db_connection,mysql', 'string', 'regex:/^[A-Za-z0-9_]+$/'],
             'db_username' => 'required_if:db_connection,mysql|string',
             'db_password' => 'nullable|string',
         ]);
@@ -109,7 +109,7 @@ class InstallController extends Controller
             'db_database_sqlite' => 'required_if:db_connection,sqlite|string',
             'db_host' => 'required_if:db_connection,mysql|string',
             'db_port' => 'required_if:db_connection,mysql|string',
-            'db_database_mysql' => 'required_if:db_connection,mysql|string',
+            'db_database_mysql' => ['required_if:db_connection,mysql', 'string', 'regex:/^[A-Za-z0-9_]+$/'],
             'db_username' => 'required_if:db_connection,mysql|string',
             'db_password' => 'nullable|string',
             'admin_name' => 'required|string|max:255',
@@ -184,7 +184,7 @@ class InstallController extends Controller
                 $content = File::get($examplePath);
                 
                 // Replace variables
-                $content = preg_replace('/APP_KEY=/', 'APP_KEY=' . $appKey, $content);
+                $content = preg_replace('/^APP_KEY=.*$/m', 'APP_KEY=' . $appKey, $content);
                 if (str_contains($content, 'APP_DEMO_CONTENT=')) {
                     $content = preg_replace('/APP_DEMO_CONTENT=[^\n]*/', 'APP_DEMO_CONTENT=' . ($request->boolean('demo_content') ? 'true' : 'false'), $content);
                 } else {
@@ -217,3 +217,4 @@ class InstallController extends Controller
         }
     }
 }
+˝˝

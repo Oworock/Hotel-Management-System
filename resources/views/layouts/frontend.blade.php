@@ -234,7 +234,7 @@
     <!-- Announcement / Global Header -->
     @if($announcement = \App\Models\Setting::getValue('global_header'))
         <div style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; text-align: center; padding: 0.6rem 1rem; font-size: 0.875rem; font-weight: 500; position: relative; z-index: 1000;">
-            {!! $announcement !!}
+            {!! \App\Support\HtmlSanitizer::clean($announcement) !!}
         </div>
     @endif
 
@@ -251,7 +251,7 @@
             @if($logoType === 'image' && !empty($logoImage))
                 <img src="{{ $logoImage }}" alt="{{ \App\Models\Setting::getValue('hotel_name', 'Aetheria') }}" class="logo-img">
             @else
-                {!! \App\Models\Setting::getValue('logo_text', '<i class="fa-solid fa-hotel"></i> Aetheria') !!}
+                {!! \App\Support\HtmlSanitizer::clean(\App\Models\Setting::getValue('logo_text', '<i class="fa-solid fa-hotel"></i> Aetheria')) !!}
             @endif
         </a>
 
@@ -316,7 +316,7 @@
                     @if($logoType === 'image' && !empty($logoImage))
                         <img src="{{ $logoImage }}" alt="Aetheria" class="logo-img" style="max-height: 32px;">
                     @else
-                        {!! \App\Models\Setting::getValue('logo_text', 'Aetheria') !!}
+                        {!! \App\Support\HtmlSanitizer::clean(\App\Models\Setting::getValue('logo_text', 'Aetheria')) !!}
                     @endif
                 </a>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; max-width: 280px;">
@@ -358,7 +358,7 @@
         </div>
         <div style="border-top: 1px solid var(--border-color); padding-top: 2rem; text-align: center;">
             <p style="font-size: 0.85rem; color: var(--text-muted);">
-                {!! \App\Models\Setting::getValue('global_footer', '© 2026 Aetheria Grand Hotel. All rights reserved.') !!}
+                {!! \App\Support\HtmlSanitizer::clean(\App\Models\Setting::getValue('global_footer', '© 2026 Aetheria Grand Hotel. All rights reserved.')) !!}
             </p>
         </div>
     </footer>

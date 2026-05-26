@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Services\PaymentGatewayService;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -90,6 +91,25 @@ class CustomerController extends Controller
             'coupon_code' => 'nullable|string',
             'addons' => 'nullable|array',
             'redeem_loyalty' => 'nullable|boolean',
+            'phone_country_code' => 'required|string|max:8',
+            'phone' => 'required|string|max:30',
+            'title' => 'nullable|string|max:20',
+            'gender' => 'nullable|string|max:30',
+            'date_of_birth' => 'required|date|before:today',
+            'nationality' => 'required|string|max:100',
+            'country_of_residence' => 'required|string|max:100',
+            'address_line1' => 'required|string|max:255',
+            'address_line2' => 'nullable|string|max:255',
+            'city' => 'required|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:30',
+            'id_type' => 'required|string|in:passport,national_id,drivers_license,residence_permit,voter_card,other',
+            'id_number' => 'required|string|max:100',
+            'emergency_contact_name' => 'required|string|max:255',
+            'emergency_contact_relationship' => 'required|string|max:100',
+            'emergency_contact_phone_country_code' => 'required|string|max:8',
+            'emergency_contact_phone' => 'required|string|max:30',
+            'marketing_consent' => 'nullable|boolean',
         ]);
 
         $start = Carbon::parse($request->check_in_date);
@@ -135,6 +155,26 @@ class CustomerController extends Controller
         $loyaltyPointsRedeemed = 0;
         $loyaltyDiscountAmount = 0.00;
         $customer = $request->user();
+        $customer->update([
+            'phone' => PhoneNumber::normalize($request->input('phone_country_code'), $request->input('phone')),
+            'title' => $request->title,
+            'gender' => $request->gender,
+            'date_of_birth' => $request->date_of_birth,
+            'nationality' => $request->nationality,
+            'country_of_residence' => $request->country_of_residence,
+            'address_line1' => $request->address_line1,
+            'address_line2' => $request->address_line2,
+            'city' => $request->city,
+            'state' => $request->state,
+            'postal_code' => $request->postal_code,
+            'id_type' => $request->id_type,
+            'id_number' => $request->id_number,
+            'emergency_contact_name' => $request->emergency_contact_name,
+            'emergency_contact_relationship' => $request->emergency_contact_relationship,
+            'emergency_contact_phone' => PhoneNumber::normalize($request->input('emergency_contact_phone_country_code'), $request->input('emergency_contact_phone')),
+            'marketing_consent' => $request->boolean('marketing_consent'),
+        ]);
+
         if ($request->boolean('redeem_loyalty') && $customer && $customer->loyalty_points > 0) {
             $userPoints = $customer->loyalty_points;
             $userPointsValue = $userPoints * 0.10;

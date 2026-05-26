@@ -84,10 +84,7 @@
                     <label class="form-label">Contact Email Address</label>
                     <input type="email" name="contact_email" class="form-control" value="{{ $settings['contact_email'] }}" required>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Contact Phone Number</label>
-                    <input type="text" name="contact_phone" class="form-control" value="{{ $settings['contact_phone'] }}" required>
-                </div>
+                @include('partials.phone-input', ['field' => 'contact_phone', 'countryField' => 'contact_phone_country_code', 'label' => 'Contact Phone Number', 'value' => $settings['contact_phone'], 'required' => true])
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">

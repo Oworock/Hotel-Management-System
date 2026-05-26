@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Install Aetheria HMS - Wizard</title>
+    <title>Install HMS - Wizard</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -95,7 +95,7 @@
 <body>
     <div class="glass-panel install-card">
         <div style="text-align: center; margin-bottom: 2rem;">
-            <h1 style="font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;">Aetheria HMS Installer</h1>
+            <h1 style="font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;"> HMS Installer</h1>
             <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Set up your stays flow management system in minutes.</p>
         </div>
 
